@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "222858399478",
+    "project_id": "stuntapp-cd51d",
+    "storage_bucket": "stuntapp-cd51d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222858399478:android:16ac9b8c1573b1083d26d7",
+        "android_client_info": {
+          "package_name": "com.example.chat_app_for_stunt_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzZ5gbdlkWjBMmsQalhhre8Q2Uud2vFqU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222858399478:android:3af3d6db5bb636313d26d7",
+        "android_client_info": {
+          "package_name": "com.example.stunt_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzZ5gbdlkWjBMmsQalhhre8Q2Uud2vFqU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
