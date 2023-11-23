@@ -5,6 +5,7 @@ var myRootNode = Root.fromJson(map);
 */
 class MessageModel {
   String? idmessage;
+  String? conversationId;
   String? idsender;
   String? idreceiver;
   String? tanggalkirim;
@@ -19,6 +20,7 @@ class MessageModel {
 
   MessageModel({
     this.idmessage,
+    this.conversationId,
     this.idsender,
     this.idreceiver,
     this.tanggalkirim,
@@ -34,6 +36,7 @@ class MessageModel {
 
   MessageModel.fromJson(Map<String, dynamic> json) {
     idmessage = json['id_message'];
+    conversationId = json['conversation_id'];
     idsender = json['id_sender'];
     idreceiver = json['id_receiver'];
     tanggalkirim = json['tanggal_kirim'];
@@ -50,6 +53,7 @@ class MessageModel {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id_message'] = idmessage;
+    data['conversation_id'] = conversationId;
     data['id_sender'] = idsender;
     data['id_receiver'] = idreceiver;
     data['tanggal_kirim'] = tanggalkirim;

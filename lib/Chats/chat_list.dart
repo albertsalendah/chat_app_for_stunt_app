@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -46,9 +48,6 @@ class _ChatListState extends State<ChatList> {
   Widget build(BuildContext context) {
     double baseWidth = 375;
     double fem = MediaQuery.of(context).size.width / baseWidth;
-    double ffem = fem * 0.97;
-    RemoteMessage? message =
-        ModalRoute.of(context)!.settings.arguments as RemoteMessage?;
     return SafeArea(
       child: GestureDetector(
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -60,7 +59,7 @@ class _ChatListState extends State<ChatList> {
             shadowColor: Colors.transparent,
             iconTheme: const IconThemeData(color: Colors.grey),
             title: Text(
-              'Daftar Chat ${message?.notification?.body}',
+              'Daftar Chat',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16 * fem,
@@ -102,7 +101,16 @@ class _ChatListState extends State<ChatList> {
                       ]),
                 );
               } else if (state is ListLatestMesasage) {
-                listMessage = state.listLatestMessage;
+                listMessage = state.listLatestMessage
+                    .where((element) =>
+                        element.conversationId !=
+                        '${user.userID}-${user.userID}')
+                    .toList();
+                listMessage.sort((a, b) {
+                  DateTime dateTimeA = DateTime.parse('${a.tanggalkirim}');
+                  DateTime dateTimeB = DateTime.parse('${b.tanggalkirim}');
+                  return dateTimeB.compareTo(dateTimeA);
+                });
               }
               return SizedBox(
                 child: RefreshIndicator(

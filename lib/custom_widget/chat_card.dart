@@ -1,10 +1,16 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Akun/edit_akun_api.dart';
+import '../Bloc/KonsultasiBloc/konsultasiBloc.dart';
 import '../Chats/chat_page.dart';
 import '../models/message_model.dart';
 import '../models/user.dart';
+import '../utils/SessionManager.dart';
+import '../utils/sqlite_helper.dart';
 
 class ChatCard extends StatefulWidget {
   final MessageModel messageModel;
@@ -19,11 +25,14 @@ class ChatCard extends StatefulWidget {
 
 class _ChatCardState extends State<ChatCard> {
   EditAkunApi editAkunApi = EditAkunApi();
+  SqliteHelper sqlite = SqliteHelper();
+  String token = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      token = await SessionManager.getToken() ?? '';
       setState(() {});
     });
   }
@@ -39,6 +48,7 @@ class _ChatCardState extends State<ChatCard> {
           context,
           MaterialPageRoute(
             builder: (context) => ChatPage(
+              senderID: widget.messageModel.idreceiver,
               receverID: widget.messageModel.idsender,
               receiverNama: widget.messageModel.namaReceiver,
               receiverKet: widget.messageModel.ketReceiver,
@@ -46,6 +56,31 @@ class _ChatCardState extends State<ChatCard> {
               receiverFCM: widget.messageModel.fcm_token,
             ),
           ),
+        );
+      },
+      onLongPress: () {
+        final RenderBox overlay =
+            Overlay.of(context).context.findRenderObject() as RenderBox;
+        final RenderBox card = context.findRenderObject() as RenderBox;
+        final Offset position =
+            card.localToGlobal(Offset.zero, ancestor: overlay);
+        showMenu(
+          context: context,
+          position: RelativeRect.fromLTRB(position.dx, position.dy, 0, 0),
+          items: [
+            PopupMenuItem(
+              value: 'hapus',
+              onTap: () async {
+                await sqlite.deleteConversation(
+                    conversation_id:
+                        widget.messageModel.conversationId.toString());
+                await context.read<KonsultasiBloc>().getLatestMesage(
+                    userID: widget.messageModel.idsender.toString(),
+                    token: token);
+              },
+              child: const Text('Hapus'),
+            ),
+          ],
         );
       },
       child: Container(

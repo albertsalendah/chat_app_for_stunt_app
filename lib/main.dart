@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:chat_app_for_stunt_app/Bloc/KonsultasiBloc/konsultasiBloc.dart';
 import 'package:chat_app_for_stunt_app/utils/firebase_api.dart';
+import 'package:chat_app_for_stunt_app/utils/sqlite_helper.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +20,7 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseApi().initPushNotifications();
   await FirebaseApi().initLocalNotification();
+  await SqliteHelper().database;
   runApp(
     MultiBlocProvider(
       providers: [

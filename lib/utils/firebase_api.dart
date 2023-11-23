@@ -4,10 +4,16 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../Chats/chat_api.dart';
 import '../Chats/chat_list.dart';
 import '../main.dart';
 
+ChatApi api = ChatApi();
+
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  final senderID = message.data['senderID'];
+  final receiverID = message.data['receiverID'];
+  api.getLatestMessageFromServer(senderID: senderID, receiverID: receiverID);
   navigatorKey.currentState?.pushNamed(ChatList.route, arguments: message);
 }
 
@@ -38,7 +44,12 @@ class FirebaseApi {
     FirebaseMessaging.onMessage.listen((event) {
       final notification = event.notification;
       if (notification == null) return;
+      final notificationData = event.data;
 
+      final senderID = notificationData['senderID'];
+      final receiverID = notificationData['receiverID'];
+      api.getLatestMessageFromServer(
+          senderID: senderID, receiverID: receiverID);
       _local_notifications.show(
           notification.hashCode,
           notification.title,
