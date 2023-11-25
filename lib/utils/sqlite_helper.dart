@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:chat_app_for_stunt_app/utils/random_String.dart';
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path;
@@ -22,21 +23,6 @@ class SqliteHelper {
 
     _database = await initDatabase();
     return _database!;
-  }
-
-  String makeId(int length) {
-    String result = "";
-    const characters =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    int charactersLength = characters.length;
-    int counter = 0;
-
-    while (counter < length) {
-      result += characters[math.Random().nextInt(charactersLength)];
-      counter += 1;
-    }
-
-    return result;
   }
 
   Future<String> get fullPath async {
@@ -70,7 +56,7 @@ class SqliteHelper {
       required String message,
       String? image,
       int? messageRead}) async {
-    String id_message = makeId(32);
+    String id_message = RandomString().makeId(32);
     final db = await database;
     if (conversation_id != '$id_sender-$id_sender') {
       String query =
@@ -124,7 +110,7 @@ class SqliteHelper {
     String query =
         "INSERT INTO messages(id_message, conversation_id,id_sender, id_receiver, tanggal_kirim, jam_kirim, message, image, messageRead) VALUES (?,?,?,?,?,?,?,?,?)";
     final result = await db.rawInsert(query, [
-      makeId(32),
+      RandomString().makeId(32),
       conversation_id,
       id_sender,
       id_receiver,
@@ -137,10 +123,11 @@ class SqliteHelper {
     return result;
   }
 
-  Future<void> updateStatusChat({int? messageRead,required String id_message}) async {
+  Future<void> updateStatusChat(
+      {int? messageRead, required String id_message}) async {
     final db = await database;
     const query = 'UPDATE messages SET messageRead = ? WHERE id_message = ?;';
-    int result = await db.rawUpdate(query, [messageRead,id_message]);
+    int result = await db.rawUpdate(query, [messageRead, id_message]);
     log('$result item deleted');
   }
 

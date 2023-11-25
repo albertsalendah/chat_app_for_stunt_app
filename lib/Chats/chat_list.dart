@@ -1,6 +1,4 @@
-import 'dart:developer';
 
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -243,7 +241,7 @@ class _ChatListState extends State<ChatList> {
                       fontSize: 14 * ffem,
                       fontWeight: FontWeight.w600,
                       height: 1.2125 * ffem / fem,
-                      color: Color(0xff161f35),
+                      color: const Color(0xff161f35),
                     ),
                   ),
                 ),
@@ -254,7 +252,7 @@ class _ChatListState extends State<ChatList> {
                     fontSize: 12 * ffem,
                     fontWeight: FontWeight.w400,
                     height: 1.6666666667 * ffem / fem,
-                    color: Color(0xff707070),
+                    color: const Color(0xff707070),
                   ),
                 ),
               ],

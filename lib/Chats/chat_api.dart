@@ -45,6 +45,7 @@ class ChatApi {
         log('Get Data Anak : ${error.message.toString()}');
       }
     }
+
     if (data.isNotEmpty) {
       String imagePath = await saveBase64Image(base64String: data.first.image);
       int res = await sqlite.saveNewMessage(
@@ -67,10 +68,11 @@ class ChatApi {
               token: token);
           await konsultasiBloc.getLatestMesage(
               userID: senderID.toString(), token: token);
-
+          log('SENDER : $senderID <=> RECEIVER : $receiverID');
           log('New Message');
         }
-        sqlite.deleteSingleChatServer(id_message: data.first.idmessage.toString(), token: token);
+        sqlite.deleteSingleChatServer(
+            id_message: data.first.idmessage.toString(), token: token);
       }
     }
   }
@@ -139,7 +141,8 @@ class ChatApi {
           "title": title,
         },
       );
-      await sqlite.updateStatusChat(messageRead: 0,id_message: entry.idmessage.toString());
+      await sqlite.updateStatusChat(
+          messageRead: 0, id_message: entry.idmessage.toString());
       log('Server Message : ${response.data['message']}');
     } on DioException catch (error) {
       if (error.response != null) {
@@ -148,7 +151,8 @@ class ChatApi {
         log(error.requestOptions.toString());
         log(error.message.toString());
       }
-      await sqlite.updateStatusChat(messageRead: null,id_message: entry.idmessage.toString());
+      await sqlite.updateStatusChat(
+          messageRead: null, id_message: entry.idmessage.toString());
     }
   }
 

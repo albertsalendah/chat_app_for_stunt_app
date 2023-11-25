@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../Chats/chat_api.dart';
 import '../../models/message_model.dart';
-import '../../models/user.dart';
 import '../../utils/config.dart';
 import 'konsultasiState.dart';
 

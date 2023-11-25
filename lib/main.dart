@@ -67,10 +67,17 @@ class _MyAppState extends State<MyApp> {
         if (isLoggedIn && !isSessionExpired) {
           return MaterialApp(
               navigatorKey: navigatorKey,
+              theme: ThemeData(
+                useMaterial3: false,
+              ),
               routes: {ChatList.route: (context) => const ChatList()},
               home: const Navigationbar(index: 0));
         } else {
-          return const MaterialApp(home: Login());
+          return MaterialApp(
+              theme: ThemeData(
+                useMaterial3: false,
+              ),
+              home: const Login());
         }
       },
     );

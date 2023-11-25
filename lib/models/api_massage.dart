@@ -1,10 +1,10 @@
 // ignore_for_file: camel_case_types
 
-class API_Massage {
+class API_Message {
   bool status;
   String? message;
 
-  API_Massage({
+  API_Message({
     required this.status,
     this.message,
   });

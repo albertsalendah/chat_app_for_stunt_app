@@ -11,9 +11,9 @@ class LoginBloc extends Cubit<LoginState> {
 
   Login_Register_Api api = Login_Register_Api();
 
-  Future<API_Massage> login(
+  Future<API_Message> login(
       {required String noHp, required String password}) async {
-    API_Massage result = await api.login(noHp: noHp, password: password);
+    API_Message result = await api.login(noHp: noHp, password: password);
     final isLoggedIn = await SessionManager.isUserLoggedIn();
     final isSessionExpired = await SessionManager.isSessionExpired();
     emit(LoggedInState(isLoggedIn, isSessionExpired));

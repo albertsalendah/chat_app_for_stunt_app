@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:chat_app_for_stunt_app/Login_Register/register.dart';
+import 'package:chat_app_for_stunt_app/LupaPassword/lupa_password.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -135,16 +136,26 @@ class _LoginState extends State<Login> {
                           ],
                         ),
                       ),
-                      // const Padding(
-                      //   padding: EdgeInsets.all(8.0),
-                      //   child: Align(
-                      //       alignment: Alignment.centerRight,
-                      //       child: Text(
-                      //         'Lupa password?',
-                      //         style: TextStyle(
-                      //             fontSize: 16, color: Color(0xff3f7af6)),
-                      //       )),
-                      // )
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Align(
+                            alignment: Alignment.centerRight,
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LupaPassword(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Lupa password?',
+                                style: TextStyle(
+                                    fontSize: 16, color: Color(0xff3f7af6)),
+                              ),
+                            )),
+                      )
                     ]),
                   ),
                 ),
@@ -166,7 +177,7 @@ class _LoginState extends State<Login> {
                             onPressed: () async {
                               if (no_wa.text.isNotEmpty &&
                                   pass.text.isNotEmpty) {
-                                API_Massage result = await context
+                                API_Message result = await context
                                     .read<LoginBloc>()
                                     .login(
                                         noHp: no_wa.text, password: pass.text);

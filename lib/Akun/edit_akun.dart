@@ -1,7 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:chat_app_for_stunt_app/LupaPassword/lupa_password_api.dart';
+import 'package:chat_app_for_stunt_app/custom_widget/popUpConfirmCode.dart';
+import 'package:chat_app_for_stunt_app/custom_widget/popUpLoading.dart';
+import 'package:chat_app_for_stunt_app/utils/random_String.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../custom_widget/popup_error.dart';
 import '../../models/user.dart';
 import '../../utils/SessionManager.dart';
@@ -30,6 +35,7 @@ class _EditAkunState extends State<EditAkun> {
   User user = User();
   String token = '';
   EditAkunApi api = EditAkunApi();
+  LupaPasswordApi apiPass = LupaPasswordApi();
   TextEditingController noWA = TextEditingController();
   TextEditingController email = TextEditingController();
   TextEditingController keterangan = TextEditingController();
@@ -69,7 +75,7 @@ class _EditAkunState extends State<EditAkun> {
 
   Future<void> updateNo() async {
     if (noWA.text.isNotEmpty) {
-      API_Massage result = await api.updateNo(
+      API_Message result = await api.updateNo(
           userID: user.userID ?? '', no_hp: noWA.text, token: token);
       if (result.status) {
         await fetch_Data();
@@ -77,7 +83,9 @@ class _EditAkunState extends State<EditAkun> {
           context: context,
           builder: (context) =>
               PopUpSuccess(message: result.message.toString()),
-        );
+        ).then((value) {
+          Navigator.pop(context);
+        });
       } else {
         showDialog(
             context: context,
@@ -96,7 +104,7 @@ class _EditAkunState extends State<EditAkun> {
 
   Future<void> updateKeterangan() async {
     if (keterangan.text.isNotEmpty) {
-      API_Massage result = await api.updateKeterangan(
+      API_Message result = await api.updateKeterangan(
           userID: user.userID.toString(),
           keterangan: keterangan.text,
           token: token);
@@ -106,7 +114,9 @@ class _EditAkunState extends State<EditAkun> {
           context: context,
           builder: (context) =>
               PopUpSuccess(message: result.message.toString()),
-        );
+        ).then((value) {
+          Navigator.pop(context);
+        });
       } else {
         showDialog(
             context: context,
@@ -125,7 +135,7 @@ class _EditAkunState extends State<EditAkun> {
 
   Future<void> updateEmail() async {
     if (email.text.isNotEmpty) {
-      API_Massage result = await api.updateEmail(
+      API_Message result = await api.updateEmail(
           userID: user.userID ?? '', email: email.text, token: token);
       if (result.status) {
         await fetch_Data();
@@ -133,7 +143,9 @@ class _EditAkunState extends State<EditAkun> {
           context: context,
           builder: (context) =>
               PopUpSuccess(message: result.message.toString()),
-        );
+        ).then((value) {
+          Navigator.pop(context);
+        });
       } else {
         showDialog(
           context: context,
@@ -156,7 +168,7 @@ class _EditAkunState extends State<EditAkun> {
     if (passConfirm.text.isNotEmpty &&
         pass.text.isNotEmpty &&
         passLama.text.isNotEmpty) {
-      API_Massage result = await api.updatePassword(
+      API_Message result = await api.updatePassword(
           userID: user.userID ?? '', password: passConfirm.text, token: token);
       if (result.status) {
         await fetch_Data();
@@ -164,7 +176,9 @@ class _EditAkunState extends State<EditAkun> {
           context: context,
           builder: (context) =>
               PopUpSuccess(message: result.message.toString()),
-        );
+        ).then((value) {
+          Navigator.pop(context);
+        });
       } else {
         showDialog(
             context: context,
@@ -310,20 +324,22 @@ class _EditAkunState extends State<EditAkun> {
                           updateNo();
                         }
                         if (widget.label == 'Ubah Email') {
-                          updateEmail();
+                          sendConfirmEmail();
                         }
                         if (widget.label == 'Ubah Specialist') {
                           updateKeterangan();
                         }
                         if (widget.label == 'Ubah Password') {
-                          API_Massage result = await api.cekPasswordLama(
+                          API_Message result = await api.cekPasswordLama(
                               noHp: user.nohp ?? '',
                               password: passLama.text,
                               token: token);
                           cekPassLama = result.status;
 
                           if (result.status) {
-                            updatePassword();
+                            if (pass.text == passConfirm.text) {
+                              updatePassword();
+                            }
                           }
                           setState(() {});
                         }
@@ -412,6 +428,58 @@ class _EditAkunState extends State<EditAkun> {
         ),
       ),
     );
+  }
+
+  void sendConfirmEmail() async {
+    String code = RandomString().makeId(6);
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return const PopUpLoading();
+        });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('randomCode', code);
+    bool result = await apiPass.sendEmail(
+        to: email.text, code: code, subject: 'Konfirmasi Email StuntApp');
+    if (result) {
+      Navigator.pop(context);
+      showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (con) {
+            return GestureDetector(
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
+              child: PopUpConfirmCode(
+                email: email.text,
+                onPressed: (String code) {
+                  SharedPreferences.getInstance().then((prefs) async {
+                    String storedCode = prefs.getString('randomCode') ?? '';
+                    if (code == storedCode) {
+                      updateEmail();
+                      prefs.remove('randomCode');
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const PopUpError(
+                            message: 'Kode yang anda masukkan salah'),
+                      );
+                    }
+                  });
+                },
+              ),
+            );
+          });
+    } else {
+      Navigator.pop(context);
+      showDialog(
+        context: context,
+        builder: (context) =>
+            const PopUpError(message: 'Email Tidak Ditemukan'),
+      );
+    }
   }
 
   Padding backbutton(double fem, BuildContext context) {

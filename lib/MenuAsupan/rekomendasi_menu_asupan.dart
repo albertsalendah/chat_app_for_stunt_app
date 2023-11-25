@@ -1,7 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:developer';
-
 import 'package:chat_app_for_stunt_app/custom_widget/popUpConfirm.dart';
 import 'package:chat_app_for_stunt_app/models/api_massage.dart';
 import 'package:chat_app_for_stunt_app/utils/formatTgl.dart';
@@ -91,7 +89,9 @@ class _RekomendasiMenuAsupanState extends State<RekomendasiMenuAsupan> {
               : '18:00';
       user = await fetch_user();
       token = await SessionManager.getToken() ?? '';
-      await fetchData(token);
+      if (listRekomendasi.isEmpty) {
+        await fetchData(token);
+      }
     });
   }
 
@@ -164,7 +164,7 @@ class _RekomendasiMenuAsupanState extends State<RekomendasiMenuAsupan> {
         title: 'Tambah Menu',
         message: 'Tambah ${menu[selectedMenuMakan - 1]}',
         onPressed: () async {
-          API_Massage result = await api.addMenuMakan(
+          API_Message result = await api.addMenuMakan(
               user_id: user.userID.toString(),
               menu_makan: selectedMenuMakan,
               jam_makan: jamMakan.text,
@@ -221,7 +221,7 @@ class _RekomendasiMenuAsupanState extends State<RekomendasiMenuAsupan> {
         title: 'Update Menu',
         message: 'Update ${menu[selectedMenuMakan - 1]}',
         onPressed: () async {
-          API_Massage result = await api.updateMenuMakan(
+          API_Message result = await api.updateMenuMakan(
               id_menu: menuMakan.idmenu.toString(),
               menu_makan: selectedMenuMakan,
               jam_makan: jamMakan.text,

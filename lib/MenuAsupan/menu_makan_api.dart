@@ -42,7 +42,7 @@ class MenuMakanAPI {
     }
   }
 
-  Future<API_Massage> addMenuMakan(
+  Future<API_Message> addMenuMakan(
       {required String user_id,
       required int menu_makan,
       required String jam_makan,
@@ -93,7 +93,7 @@ class MenuMakanAPI {
           'satuan_minuman': satuan_minuman
         },
       );
-      return API_Massage(status: true, message: response.data['message']);
+      return API_Message(status: true, message: response.data['message']);
     } on DioException catch (error) {
       if (error.response != null) {
         log(error.response!.data['error']);
@@ -102,11 +102,11 @@ class MenuMakanAPI {
         log(error.requestOptions.toString());
         log(error.message.toString());
       }
-      return API_Massage(status: false, message: error.message.toString());
+      return API_Message(status: false, message: error.message.toString());
     }
   }
 
-  Future<API_Massage> updateMenuMakan(
+  Future<API_Message> updateMenuMakan(
       {required String id_menu,
       required int menu_makan,
       required String jam_makan,
@@ -157,7 +157,7 @@ class MenuMakanAPI {
           'satuan_minuman': satuan_minuman
         },
       );
-      return API_Massage(status: true, message: response.data['message']);
+      return API_Message(status: true, message: response.data['message']);
     } on DioException catch (error) {
       if (error.response != null) {
         log(error.response!.data['error']);
@@ -166,7 +166,7 @@ class MenuMakanAPI {
         log(error.requestOptions.toString());
         log(error.message.toString());
       }
-      return API_Massage(status: false, message: error.message.toString());
+      return API_Message(status: false, message: error.message.toString());
     }
   }
 }

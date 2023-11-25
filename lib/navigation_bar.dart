@@ -41,7 +41,7 @@ class _NavigationbarState extends State<Navigationbar> {
           ? JwtDecoder.getRemainingTime(token)
           : const Duration(minutes: 0);
       Configs().startSessionTimer(context, context.read<LoginBloc>(), duration);
-      //await fetchData(token);
+      await fetchData(token);
       setState(() {
         selectedIndex = widget.index;
       });
@@ -53,6 +53,9 @@ class _NavigationbarState extends State<Navigationbar> {
   }
 
   Future<void> fetchData(String token) async {
+     await context
+        .read<AllBloc>()
+        .getUserData(userID: user.userID.toString(), token: token);
     await context.read<AllBloc>().getListRekomendasi(user_id: user.userID ?? '', token: token);
   }
 

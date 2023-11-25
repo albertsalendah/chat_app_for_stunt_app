@@ -47,7 +47,7 @@ class Blue_Header_01 extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(232 * fem),
-                    color: Color(0xff286af5),
+                    color: const Color(0xff286af5),
                   ),
                 ),
               ),

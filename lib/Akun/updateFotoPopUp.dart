@@ -5,6 +5,7 @@ import 'dart:developer';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:chat_app_for_stunt_app/custom_widget/popUpLoading.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -152,18 +153,18 @@ class _UpdateFotoPopUpState extends State<UpdateFotoPopUp> {
                                   borderRadius: BorderRadius.circular(10)),
                               backgroundColor: Colors.green),
                           onPressed: () async {
-                            API_Massage result = await api.updateFoto(
+                            showDialog(
+                              context: context,
+                              builder: (context) => const PopUpLoading(),
+                            );
+                            API_Message result = await api.updateFoto(
                                 userID: user.userID.toString(),
                                 foto: foto,
                                 token: token);
+                            Navigator.pop(context);
                             if (result.status) {
                               imagebytes = null;
                               Navigator.pop(context);
-                              // showDialog(
-                              //   context: context,
-                              //   builder: (context) => PopUpSuccess(
-                              //       message: result.message.toString()),
-                              // );
                             } else {
                               showDialog(
                                 context: context,

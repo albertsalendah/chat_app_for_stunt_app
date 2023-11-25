@@ -17,7 +17,6 @@ import '../../custom_widget/receiveMessageCard.dart';
 import '../../models/user.dart';
 import '../../utils/SessionManager.dart';
 import '../custom_widget/sendMessageCard.dart';
-import '../models/api_massage.dart';
 import '../models/message_model.dart';
 
 class ChatPage extends StatefulWidget {

@@ -1,6 +1,5 @@
 // ignore_for_file: non_constant_identifier_names
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:chat_app_for_stunt_app/Akun/updateFotoPopUp.dart';
 import 'package:flutter/material.dart';
@@ -71,7 +70,7 @@ class _AkunState extends State<Akun> {
   }
 
   Future<void> hapusAkun() async {
-    API_Massage result =
+    API_Message result =
         await api.hapusAkun(userID: user.userID ?? '', token: token);
     if (result.status) {
       await SessionManager.logout();
