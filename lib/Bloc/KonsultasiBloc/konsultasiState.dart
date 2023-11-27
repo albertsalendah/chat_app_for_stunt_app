@@ -23,11 +23,12 @@ class HealthWorkerLoaded extends KonsultasiState {
 
 class ListLatestMesasage extends KonsultasiState {
   final List<MessageModel> listLatestMessage;
+  final List<MessageModel> listAllUnread;
 
-  const ListLatestMesasage(this.listLatestMessage);
+  const ListLatestMesasage(this.listLatestMessage, this.listAllUnread);
 
   @override
-  List<Object> get props => [listLatestMessage];
+  List<Object> get props => [listLatestMessage, listAllUnread];
 }
 
 class ListIndividualMesasage extends KonsultasiState {

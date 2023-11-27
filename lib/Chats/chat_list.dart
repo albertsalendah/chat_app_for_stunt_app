@@ -1,3 +1,4 @@
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,6 +23,7 @@ class _ChatListState extends State<ChatList> {
   User user = User();
   String token = '';
   List<MessageModel> listMessage = [];
+  List<MessageModel> unreadlist = [];
 
   @override
   void initState() {
@@ -39,7 +41,7 @@ class _ChatListState extends State<ChatList> {
   Future<void> fetchData() async {
     await context
         .read<KonsultasiBloc>()
-        .getLatestMesage(userID: user.userID.toString(), token: token);
+        .getLatestMesage(userID: user.userID.toString());
   }
 
   @override
@@ -109,6 +111,7 @@ class _ChatListState extends State<ChatList> {
                   DateTime dateTimeB = DateTime.parse('${b.tanggalkirim}');
                   return dateTimeB.compareTo(dateTimeA);
                 });
+                unreadlist = state.listAllUnread;
               }
               return SizedBox(
                 child: RefreshIndicator(
@@ -116,11 +119,17 @@ class _ChatListState extends State<ChatList> {
                     await fetchData();
                   },
                   child: ListView.builder(
+                    padding: const EdgeInsets.all(8),
                     itemCount: listMessage.length,
                     itemBuilder: (context, index) {
+                      var count = unreadlist.where((element) =>
+                          element.conversationId ==
+                          listMessage[index].conversationId);
                       return Column(
                         children: [
-                          ChatCard(messageModel: listMessage[index]),
+                          ChatCard(
+                              messageModel: listMessage[index],
+                              totalUnread: count.length),
                           const SizedBox(
                             height: 8,
                           )

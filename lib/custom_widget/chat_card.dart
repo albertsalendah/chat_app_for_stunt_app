@@ -1,21 +1,20 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'dart:convert';
+import 'package:chat_app_for_stunt_app/utils/formatTgl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Akun/edit_akun_api.dart';
 import '../Bloc/KonsultasiBloc/konsultasiBloc.dart';
 import '../Chats/chat_page.dart';
 import '../models/message_model.dart';
-import '../utils/SessionManager.dart';
 import '../utils/sqlite_helper.dart';
 
 class ChatCard extends StatefulWidget {
   final MessageModel messageModel;
-  const ChatCard({
-    super.key,
-    required this.messageModel,
-  });
+  final int totalUnread;
+  const ChatCard(
+      {super.key, required this.messageModel, required this.totalUnread});
 
   @override
   State<ChatCard> createState() => _ChatCardState();
@@ -24,13 +23,11 @@ class ChatCard extends StatefulWidget {
 class _ChatCardState extends State<ChatCard> {
   EditAkunApi editAkunApi = EditAkunApi();
   SqliteHelper sqlite = SqliteHelper();
-  String token = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      token = await SessionManager.getToken() ?? '';
       setState(() {});
     });
   }
@@ -46,13 +43,12 @@ class _ChatCardState extends State<ChatCard> {
           context,
           MaterialPageRoute(
             builder: (context) => ChatPage(
-              senderID: widget.messageModel.idreceiver,
-              receverID: widget.messageModel.idsender,
-              receiverNama: widget.messageModel.namaReceiver,
-              receiverKet: widget.messageModel.ketReceiver,
-              receiverFoto: widget.messageModel.fotoReceiver,
-              receiverFCM: widget.messageModel.fcm_token,
-            ),
+                senderID: widget.messageModel.idreceiver,
+                receverID: widget.messageModel.idsender,
+                receiverNama: widget.messageModel.namaReceiver,
+                receiverKet: widget.messageModel.ketReceiver,
+                receiverFoto: widget.messageModel.fotoReceiver,
+                receiverFCM: widget.messageModel.fcm_token),
           ),
         );
       },
@@ -73,8 +69,7 @@ class _ChatCardState extends State<ChatCard> {
                     conversation_id:
                         widget.messageModel.conversationId.toString());
                 await context.read<KonsultasiBloc>().getLatestMesage(
-                    userID: widget.messageModel.idsender.toString(),
-                    token: token);
+                    userID: widget.messageModel.idreceiver.toString());
               },
               child: const Text('Hapus'),
             ),
@@ -82,9 +77,10 @@ class _ChatCardState extends State<ChatCard> {
         );
       },
       child: Container(
-        padding: EdgeInsets.fromLTRB(16 * fem, 16 * fem, 0 * fem, 0 * fem),
+        padding: const EdgeInsets.all(8),
+        alignment: Alignment.centerLeft,
         width: double.infinity,
-        height: 72 * fem,
+        height: 76 * fem,
         decoration: BoxDecoration(
           border: Border.all(color: const Color(0xfff0f0f0)),
           color: const Color(0xffffffff),
@@ -97,94 +93,111 @@ class _ChatCardState extends State<ChatCard> {
             ),
           ],
         ),
-        child: SizedBox(
-          width: 348 * fem,
-          height: 94 * fem,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                margin:
-                    EdgeInsets.fromLTRB(0 * fem, 0.5 * fem, 73 * fem, 0 * fem),
-                height: 41 * fem,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.fromLTRB(
-                          0 * fem, 0 * fem, 11 * fem, 0 * fem),
-                      width: 45 * fem,
-                      height: double.infinity,
-                      child: widget.messageModel.fotoReceiver != null &&
-                              widget.messageModel.fotoReceiver!.isNotEmpty
-                          ? CircleAvatar(
-                              radius: 39.0 * fem,
-                              backgroundImage: MemoryImage(
-                                base64Decode(
-                                  widget.messageModel.fotoReceiver.toString(),
-                                ),
-                              ),
-                            )
-                          : CircleAvatar(
-                              radius: 45.0 * fem,
-                              backgroundImage: const AssetImage(
-                                  'assets/images/group-1-jAH.png'),
-                            ),
-                    ),
-                    SizedBox(
-                      height: double.infinity,
-                      width: 185,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: EdgeInsets.fromLTRB(
-                                0 * fem, 0 * fem, 0 * fem, 2 * fem),
-                            child: Text(
-                              widget.messageModel.namaReceiver ?? '',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 14 * ffem,
-                                fontWeight: FontWeight.w600,
-                                height: 1.2125 * ffem / fem,
-                                color: const Color(0xff161f35),
-                              ),
-                            ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SizedBox(
+                width: 45 * fem,
+                height: double.infinity,
+                child: CircleAvatar(
+                  radius: 39.0 * fem,
+                  backgroundImage: widget.messageModel.fotoReceiver != null &&
+                          widget.messageModel.fotoReceiver!.isNotEmpty
+                      ? MemoryImage(
+                          base64Decode(
+                            widget.messageModel.fotoReceiver.toString(),
                           ),
-                          Text(
-                            widget.messageModel.message ?? '',
+                        ) as ImageProvider
+                      : const AssetImage('assets/images/group-1-jAH.png'),
+                ),
+              ),
+            ),
+            Container(
+              height: 70,
+              width: 310,
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.fromLTRB(
+                              0 * fem, 0 * fem, 0 * fem, 2 * fem),
+                          child: Text(
+                            widget.messageModel.namaReceiver ?? '',
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: TextStyle(
-                              fontSize: 12 * ffem,
-                              fontWeight: FontWeight.w400,
-                              height: 1.6666666667 * ffem / fem,
-                              color: const Color(0xff707070),
+                              fontSize: 18 * ffem,
+                              fontWeight: FontWeight.w600,
+                              height: 1.2125 * ffem / fem,
+                              color: const Color(0xff161f35),
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          FormatTgl().formatSpecialDate(
+                              widget.messageModel.tanggalkirim),
+                          style: const TextStyle(
+                              fontSize: 14, color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 2,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.messageModel.message ?? '',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 16 * ffem,
+                            fontWeight: FontWeight.w400,
+                            height: 1.6666666667 * ffem / fem,
+                            color: const Color(0xff707070),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Visibility(
+                            visible: widget.totalUnread > 0,
+                            child: Container(
+                                width: 22 * fem,
+                                height: 22 * fem,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                    color: Colors.blue,
+                                    border: Border.all(color: Colors.white),
+                                    borderRadius:
+                                        BorderRadius.circular(22 * fem)),
+                                child: Text(
+                                  widget.totalUnread.toString(),
+                                  style: const TextStyle(
+                                      fontSize: 14, color: Colors.white),
+                                )),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Container(
-                    width: 35 * fem,
-                    height: 35 * fem,
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(
-                      Icons.chat_outlined,
-                      color: Colors.grey,
-                    )),
-              )
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

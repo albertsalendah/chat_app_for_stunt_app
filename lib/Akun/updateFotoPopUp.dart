@@ -113,16 +113,12 @@ class _UpdateFotoPopUpState extends State<UpdateFotoPopUp> {
                       onTap: () {
                         pickPicture();
                       },
-                      child: imagebytes != null
-                          ? CircleAvatar(
-                              radius: 65.0,
-                              backgroundImage: MemoryImage(imagebytes!),
-                            )
-                          : Image.asset(
-                              'assets/images/group-115.png',
-                              width: 65 * fem,
-                              height: 65 * fem,
-                            ),
+                      child: CircleAvatar(
+                        radius: 65.0,
+                        backgroundImage: imagebytes != null
+                            ? MemoryImage(imagebytes!) as ImageProvider
+                            : const AssetImage('assets/images/group-115.png'),
+                      ),
                     ),
                     Container(
                       padding: const EdgeInsets.only(top: 8),

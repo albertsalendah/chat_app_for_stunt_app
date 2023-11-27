@@ -2,6 +2,7 @@
 
 import 'package:chat_app_for_stunt_app/Login_Register/register.dart';
 import 'package:chat_app_for_stunt_app/LupaPassword/lupa_password.dart';
+import 'package:chat_app_for_stunt_app/custom_widget/popUpLoading.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -177,10 +178,17 @@ class _LoginState extends State<Login> {
                             onPressed: () async {
                               if (no_wa.text.isNotEmpty &&
                                   pass.text.isNotEmpty) {
+                                showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (context) {
+                                      return const PopUpLoading();
+                                    });
                                 API_Message result = await context
                                     .read<LoginBloc>()
                                     .login(
                                         noHp: no_wa.text, password: pass.text);
+                                Navigator.pop(context);
                                 if (result.status) {
                                   clear_field();
                                 } else {

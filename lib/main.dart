@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:chat_app_for_stunt_app/Bloc/KonsultasiBloc/konsultasiBloc.dart';
+import 'package:chat_app_for_stunt_app/Bloc/SocketBloc/socket_bloc.dart';
 import 'package:chat_app_for_stunt_app/utils/firebase_api.dart';
 import 'package:chat_app_for_stunt_app/utils/sqlite_helper.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -26,6 +27,7 @@ Future<void> main() async {
       providers: [
         BlocProvider(create: (context) => AllBloc()),
         BlocProvider(create: (context) => LoginBloc()),
+        BlocProvider(create: (context) => SocketProviderBloc()),
         BlocProvider(create: (context) => KonsultasiBloc()),
       ],
       child: const MyApp(),

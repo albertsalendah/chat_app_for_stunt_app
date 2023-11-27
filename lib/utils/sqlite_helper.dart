@@ -6,10 +6,8 @@ import 'package:chat_app_for_stunt_app/utils/random_String.dart';
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path;
-import 'dart:math' as math;
 import '../models/message_model.dart';
 import '../models/user.dart';
-import 'SessionManager.dart';
 import 'config.dart';
 
 class SqliteHelper {
@@ -40,7 +38,7 @@ class SqliteHelper {
       singleInstance: true,
       onCreate: (Database db, int version) async {
         await db.execute(
-            'CREATE TABLE $tableName ( id_message VARCHAR(32) PRIMARY KEY, conversation_id VARCHAR(128),id_sender VARCHAR(32),id_receiver VARCHAR(32), tanggal_kirim DATETIME,jam_kirim VARCHAR(10),message VARCHAR(255), image LONGTEXT NULL, messageRead INTEGER(1))');
+            'CREATE TABLE $tableName ( id_message VARCHAR(128) PRIMARY KEY, conversation_id VARCHAR(128),id_sender VARCHAR(32),id_receiver VARCHAR(32), tanggal_kirim DATETIME,jam_kirim VARCHAR(10),message VARCHAR(255), image LONGTEXT NULL, messageRead INTEGER(1))');
         await db.execute('PRAGMA cache_size = -100000000;');
         log('Table $tableName created successfully!');
       },
@@ -56,7 +54,7 @@ class SqliteHelper {
       required String message,
       String? image,
       int? messageRead}) async {
-    String id_message = RandomString().makeId(32);
+    String id_message = RandomString().makeId(128);
     final db = await database;
     if (conversation_id != '$id_sender-$id_sender') {
       String query =
@@ -98,7 +96,8 @@ class SqliteHelper {
   }
 
   Future<int> saveNewMessage(
-      {required String conversation_id,
+      {required String id_message,
+      required String conversation_id,
       required String id_sender,
       required String id_receiver,
       required String tanggal_kirim,
@@ -110,7 +109,7 @@ class SqliteHelper {
     String query =
         "INSERT INTO messages(id_message, conversation_id,id_sender, id_receiver, tanggal_kirim, jam_kirim, message, image, messageRead) VALUES (?,?,?,?,?,?,?,?,?)";
     final result = await db.rawInsert(query, [
-      RandomString().makeId(32),
+      id_message,
       conversation_id,
       id_sender,
       id_receiver,
@@ -128,12 +127,11 @@ class SqliteHelper {
     final db = await database;
     const query = 'UPDATE messages SET messageRead = ? WHERE id_message = ?;';
     int result = await db.rawUpdate(query, [messageRead, id_message]);
-    log('$result item deleted');
+    log('$result item Updated');
   }
 
   Future<List<MessageModel>> getListLatestMessage(
       {required String userID}) async {
-    String token = await SessionManager.getToken() ?? '';
     final db = await database;
     const query = '''
   SELECT m.*
@@ -158,7 +156,7 @@ class SqliteHelper {
         .toList();
     List<MessageModel> result = [];
     if (listUID.isNotEmpty) {
-      List<User> users = await getDataUser(userID: parts, token: token);
+      List<User> users = await getDataUser(userID: parts);
       result = res.map((e) {
         User user = e['id_receiver'] != userID
             ? users.firstWhere(
@@ -191,6 +189,26 @@ class SqliteHelper {
     return result;
   }
 
+  Future<List<MessageModel>> countUnRead() async {
+    final db = await database;
+    const query = 'SELECT * FROM messages WHERE messageRead != 1';
+    List<Map<String, dynamic>> count = await db.rawQuery(query);
+    List<MessageModel> result = count.map((e) {
+      return MessageModel(
+        idmessage: e['id_message'],
+        conversationId: e['conversation_id'],
+        idsender: e['id_sender'],
+        idreceiver: e['id_receiver'],
+        tanggalkirim: e['tanggal_kirim'],
+        jamkirim: e['jam_kirim'],
+        message: e['message'],
+        image: e['image'],
+        messageRead: e['messageRead'],
+      );
+    }).toList();
+    return result;
+  }
+
   Future<List<MessageModel>> getIndividualMessage(
       {required String senderID, required String receiverID}) async {
     final db = await database;
@@ -214,21 +232,18 @@ class SqliteHelper {
   }
 
   Future<void> deleteConversation({required String conversation_id}) async {
-    String token = await SessionManager.getToken() ?? '';
     final db = await database;
     const query = 'DELETE FROM messages WHERE conversation_id = ?;';
     int result = await db.rawDelete(query, [conversation_id]);
     if (result != 0) {
-      await deleteConversationServer(
-          conversation_id: conversation_id, token: token);
+      await deleteConversationServer(conversation_id: conversation_id);
     }
     log('$result item deleted');
   }
 
   Future<void> deleteConversationServer(
-      {required String conversation_id, required String token}) async {
+      {required String conversation_id}) async {
     try {
-      dio.options.headers['x-access-token'] = token;
       final response = await dio.post(
         '${link}delete_conversation',
         data: {'conversation_id': conversation_id},
@@ -247,20 +262,17 @@ class SqliteHelper {
   }
 
   Future<void> deleteSingleChat({required String id_message}) async {
-    String token = await SessionManager.getToken() ?? '';
     final db = await database;
     const query = 'DELETE FROM messages WHERE id_message = ?;';
     int result = await db.rawDelete(query, [id_message]);
     if (result != 0) {
-      await deleteSingleChatServer(id_message: id_message, token: token);
+      await deleteSingleChatServer(id_message: id_message);
     }
     log('$result item deleted');
   }
 
-  Future<void> deleteSingleChatServer(
-      {required String id_message, required String token}) async {
+  Future<void> deleteSingleChatServer({required String id_message}) async {
     try {
-      dio.options.headers['x-access-token'] = token;
       final response = await dio.post(
         '${link}delete_single_chat',
         data: {'id_message': id_message},
@@ -278,11 +290,9 @@ class SqliteHelper {
     }
   }
 
-  Future<List<User>> getDataUser(
-      {required List<String> userID, required String token}) async {
+  Future<List<User>> getDataUser({required List<String> userID}) async {
     List<User> data = [];
     try {
-      dio.options.headers['x-access-token'] = token;
       final response = await dio.get(
         '${link}get_data_user_message',
         data: {'userID': userID},

@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
-
+import 'package:chat_app_for_stunt_app/Bloc/KonsultasiBloc/konsultasiBloc.dart';
+import 'package:chat_app_for_stunt_app/Bloc/SocketBloc/socket_bloc.dart';
 import 'package:chat_app_for_stunt_app/MenuAsupan/rekomendasi_menu_asupan.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -45,6 +46,9 @@ class _NavigationbarState extends State<Navigationbar> {
       setState(() {
         selectedIndex = widget.index;
       });
+      context
+          .read<SocketProviderBloc>()
+          .connectSocket(userID: user.userID.toString());
     });
   }
 
@@ -53,10 +57,15 @@ class _NavigationbarState extends State<Navigationbar> {
   }
 
   Future<void> fetchData(String token) async {
-     await context
+    await context
         .read<AllBloc>()
         .getUserData(userID: user.userID.toString(), token: token);
-    await context.read<AllBloc>().getListRekomendasi(user_id: user.userID ?? '', token: token);
+    await context
+        .read<KonsultasiBloc>()
+        .getLatestMesage(userID: user.userID.toString());
+    await context
+        .read<AllBloc>()
+        .getListRekomendasi(user_id: user.userID ?? '', token: token);
   }
 
   @override

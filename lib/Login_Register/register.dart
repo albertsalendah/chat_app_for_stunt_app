@@ -20,7 +20,6 @@ import '../../custom_widget/popup_error.dart';
 import '../../custom_widget/popup_success.dart';
 import '../../models/api_massage.dart';
 import '../navigation_bar.dart';
-import '../utils/firebase_api.dart';
 import 'login.dart';
 import 'login_register_api.dart';
 
@@ -44,6 +43,9 @@ class _RegisterState extends State<Register> {
   List<PlatformFile> picked_foto = [];
   Uint8List? imagebytes;
   String foto = '';
+  final ScrollController _scrollController = ScrollController();
+  List<GlobalKey<FormState>> keys =
+      List.generate(6, (index) => GlobalKey<FormState>());
 
   void clear_field() {
     nama.text = '';
@@ -58,6 +60,14 @@ class _RegisterState extends State<Register> {
       node.dispose();
     }
     super.dispose();
+  }
+
+  void autoScroll(GlobalKey key) {
+    if (key.currentContext != null) {
+      Scrollable.ensureVisible(key.currentContext!,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.decelerate);
+    }
   }
 
   void pickPicture() async {
@@ -110,67 +120,45 @@ class _RegisterState extends State<Register> {
                         'Untuk mendaftarkan akun anda, silahkan mengisi data dibawah ini'),
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     padding: EdgeInsets.only(
                         bottom: MediaQuery.of(context).viewInsets.bottom / 2),
-                    reverse: true,
+                    reverse: false,
                     child: Column(
                       children: [
                         const SizedBox(
                           height: 16,
                         ),
                         GestureDetector(
-                          onTap: () {
-                            pickPicture();
-                          },
-                          child: imagebytes != null
-                              ? CircleAvatar(
-                                  radius: 45.0,
-                                  backgroundImage: MemoryImage(imagebytes!),
-                                  child: Align(
-                                    alignment: Alignment.bottomCenter,
-                                    child: Container(
-                                      width: 90,
-                                      height: 45,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withAlpha(200),
-                                        borderRadius: const BorderRadius.only(
-                                          bottomLeft: Radius.circular(65),
-                                          bottomRight: Radius.circular(65),
-                                        ),
-                                      ),
-                                      child: const Center(
-                                          child: Text(
-                                        'Foto',
-                                        style: TextStyle(color: Colors.black),
-                                      )),
-                                    ),
-                                  ),
-                                )
-                              : CircleAvatar(
-                                  radius: 45.0,
-                                  backgroundImage: const AssetImage(
+                            onTap: () {
+                              pickPicture();
+                            },
+                            child: CircleAvatar(
+                              radius: 45.0,
+                              backgroundImage: imagebytes != null
+                                  ? MemoryImage(imagebytes!) as ImageProvider
+                                  : const AssetImage(
                                       'assets/images/group-115.png'),
-                                  child: Align(
-                                    alignment: Alignment.bottomCenter,
-                                    child: Container(
-                                      width: 90,
-                                      height: 45,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withAlpha(200),
-                                        borderRadius: const BorderRadius.only(
-                                          bottomLeft: Radius.circular(65),
-                                          bottomRight: Radius.circular(65),
-                                        ),
-                                      ),
-                                      child: const Center(
-                                          child: Text(
-                                        'Foto',
-                                        style: TextStyle(color: Colors.black),
-                                      )),
+                              child: Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Container(
+                                  width: 90,
+                                  height: 45,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(200),
+                                    borderRadius: const BorderRadius.only(
+                                      bottomLeft: Radius.circular(65),
+                                      bottomRight: Radius.circular(65),
                                     ),
                                   ),
+                                  child: const Center(
+                                      child: Text(
+                                    'Foto',
+                                    style: TextStyle(color: Colors.black),
+                                  )),
                                 ),
-                        ),
+                              ),
+                            )),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Column(
@@ -180,17 +168,29 @@ class _RegisterState extends State<Register> {
                                 padding: EdgeInsets.all(8.0),
                                 child: Text("Nama"),
                               ),
-                              TextFormField(
+                              Focus(
+                                onFocusChange: (hasFocus) {
+                                  if (hasFocus) {
+                                    autoScroll(keys[0]);
+                                  }
+                                },
+                                child: TextFormField(
                                   controller: nama,
+                                  key: keys[0],
                                   focusNode: focusNodes[0],
-                                  onEditingComplete: () =>
-                                      focusNodes[1].requestFocus(),
+                                  onEditingComplete: () {
+                                    focusNodes[1].requestFocus();
+                                    autoScroll(keys[1]);
+                                  },
                                   keyboardType: TextInputType.name,
                                   decoration: InputDecoration(
-                                      hintText: 'masukkan nama lengkap',
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10)))),
+                                    hintText: 'masukkan nama lengkap',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -203,17 +203,29 @@ class _RegisterState extends State<Register> {
                                 padding: EdgeInsets.all(8.0),
                                 child: Text("Specialist"),
                               ),
-                              TextFormField(
+                              Focus(
+                                onFocusChange: (hasFocus) {
+                                  if (hasFocus) {
+                                    autoScroll(keys[1]);
+                                  }
+                                },
+                                child: TextFormField(
                                   controller: keterangan,
+                                  key: keys[1],
                                   focusNode: focusNodes[1],
-                                  onEditingComplete: () =>
-                                      focusNodes[2].requestFocus(),
+                                  onEditingComplete: () {
+                                    focusNodes[2].requestFocus();
+                                    autoScroll(keys[2]);
+                                  },
                                   keyboardType: TextInputType.name,
                                   decoration: InputDecoration(
-                                      hintText: 'Contoh : Pakar Gizi',
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10)))),
+                                    hintText: 'Contoh : Pakar Gizi',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -226,31 +238,42 @@ class _RegisterState extends State<Register> {
                                 padding: EdgeInsets.all(8.0),
                                 child: Text('No. WhatsApp'),
                               ),
-                              TextFormField(
+                              Focus(
+                                onFocusChange: (hasFocus) {
+                                  if (hasFocus) {
+                                    autoScroll(keys[2]);
+                                  }
+                                },
+                                child: TextFormField(
                                   controller: no_wa,
+                                  key: keys[2],
                                   focusNode: focusNodes[2],
-                                  onEditingComplete: () =>
-                                      focusNodes[3].requestFocus(),
+                                  onEditingComplete: () {
+                                    focusNodes[3].requestFocus();
+                                    autoScroll(keys[3]);
+                                  },
                                   keyboardType: TextInputType.phone,
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly
                                   ],
                                   decoration: InputDecoration(
-                                      hintText: 'No. WhatsApp',
-                                      prefixIcon: const Padding(
-                                        padding:
-                                            EdgeInsets.only(left: 8, right: 5),
-                                        child: Text(
-                                          '+62 |',
-                                          style: TextStyle(fontSize: 18),
-                                        ),
+                                    hintText: 'No. WhatsApp',
+                                    prefixIcon: const Padding(
+                                      padding:
+                                          EdgeInsets.only(left: 8, right: 5),
+                                      child: Text(
+                                        '+62 |',
+                                        style: TextStyle(fontSize: 18),
                                       ),
-                                      prefixIconConstraints:
-                                          const BoxConstraints(
-                                              minWidth: 0, minHeight: 0),
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10)))),
+                                    ),
+                                    prefixIconConstraints: const BoxConstraints(
+                                        minWidth: 0, minHeight: 0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -263,32 +286,42 @@ class _RegisterState extends State<Register> {
                                 padding: EdgeInsets.all(8.0),
                                 child: Text('Email'),
                               ),
-                              TextFormField(
-                                controller: email,
-                                autovalidateMode:
-                                    AutovalidateMode.onUserInteraction,
-                                focusNode: focusNodes[3],
-                                onEditingComplete: () =>
-                                    focusNodes[4].requestFocus(),
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  hintText: 'Email',
-                                  prefixIcon: const Icon(
-                                    Icons.email_outlined,
-                                    color: Colors.grey,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Silahkan isi email anda';
-                                  } else if (!isValidEmail(value)) {
-                                    return 'Format email salah';
+                              Focus(
+                                onFocusChange: (hasFocus) {
+                                  if (hasFocus) {
+                                    autoScroll(keys[3]);
                                   }
-                                  return null;
                                 },
+                                child: TextFormField(
+                                  controller: email,
+                                  autovalidateMode:
+                                      AutovalidateMode.onUserInteraction,
+                                  key: keys[3],
+                                  focusNode: focusNodes[3],
+                                  onEditingComplete: () {
+                                    focusNodes[4].requestFocus();
+                                    autoScroll(keys[4]);
+                                  },
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                    hintText: 'Email',
+                                    prefixIcon: const Icon(
+                                      Icons.email_outlined,
+                                      color: Colors.grey,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Silahkan isi email anda';
+                                    } else if (!isValidEmail(value)) {
+                                      return 'Format email salah';
+                                    }
+                                    return null;
+                                  },
+                                ),
                               ),
                             ],
                           ),
@@ -302,33 +335,43 @@ class _RegisterState extends State<Register> {
                                 padding: EdgeInsets.all(8.0),
                                 child: Text('Kata Sandi'),
                               ),
-                              TextFormField(
-                                  controller: pass,
-                                  focusNode: focusNodes[4],
-                                  onEditingComplete: () =>
-                                      focusNodes[5].requestFocus(),
-                                  obscureText: !passwordVisible,
-                                  decoration: InputDecoration(
-                                      hintText: 'masukkan kata sandi',
-                                      prefixIcon: const Icon(
-                                        Icons.lock_outline,
-                                        color: Colors.grey,
-                                      ),
-                                      suffixIcon: IconButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            passwordVisible = !passwordVisible;
-                                          });
-                                        },
-                                        icon: Icon(
-                                          !passwordVisible
-                                              ? Icons.visibility_off
-                                              : Icons.visibility,
+                              Focus(
+                                onFocusChange: (hasFocus) {
+                                  if (hasFocus) {
+                                    autoScroll(keys[4]);
+                                  }
+                                },
+                                child: TextFormField(
+                                    controller: pass,
+                                    key: keys[4],
+                                    focusNode: focusNodes[4],
+                                    onEditingComplete: () {
+                                      focusNodes[5].requestFocus();
+                                    },
+                                    obscureText: !passwordVisible,
+                                    decoration: InputDecoration(
+                                        hintText: 'masukkan kata sandi',
+                                        prefixIcon: const Icon(
+                                          Icons.lock_outline,
+                                          color: Colors.grey,
                                         ),
-                                      ),
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8)))),
+                                        suffixIcon: IconButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              passwordVisible =
+                                                  !passwordVisible;
+                                            });
+                                          },
+                                          icon: Icon(
+                                            !passwordVisible
+                                                ? Icons.visibility_off
+                                                : Icons.visibility,
+                                          ),
+                                        ),
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)))),
+                              ),
                             ],
                           ),
                         ),
@@ -393,7 +436,6 @@ class _RegisterState extends State<Register> {
                             ),
                           )),
                       RichText(
-                        // sudahpunyaakunmasukdisiniZgM (316:2492)
                         text: TextSpan(
                           style: TextStyle(
                             fontSize: 14 * ffem,
@@ -467,6 +509,14 @@ class _RegisterState extends State<Register> {
                   SharedPreferences.getInstance().then((prefs) async {
                     String storedCode = prefs.getString('randomCode') ?? '';
                     if (code == storedCode) {
+                      var conLoading;
+                      showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) {
+                            conLoading = context;
+                            return const PopUpLoading();
+                          });
                       API_Message result = await api.registerUser(
                           nama: nama.text,
                           noHp: no_wa.text,
@@ -475,7 +525,9 @@ class _RegisterState extends State<Register> {
                           fcm_token: '',
                           foto: foto,
                           keterangan: keterangan.text);
+                      Navigator.pop(conLoading);
                       if (result.status) {
+                        Navigator.pop(con);
                         showDialog(
                             context: context,
                             builder: (context) => PopUpSuccess(
