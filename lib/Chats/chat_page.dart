@@ -62,6 +62,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       user = await SessionManager.getUser();
       token = await SessionManager.getToken() ?? '';
+      socketBloc.socket?.emit('signIn', user.userID.toString());
       String currentPage = await SessionManager.getCurrentPage() ?? '';
       if (currentPage.isNotEmpty) {
         await SessionManager.removeCurrentPage();

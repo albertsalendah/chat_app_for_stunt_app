@@ -1,6 +1,4 @@
 // ignore_for_file: non_constant_identifier_names
-
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
@@ -239,8 +237,8 @@ class SqliteHelper {
     final db = await database;
     final List<String> listIDs = [];
     listIDs.add(contact_id);
-    final List<User> users =
-        listIDs.isNotEmpty ? await getDataUser(userID: listIDs) : [];
+    // final List<User> users =
+    //     listIDs.isNotEmpty ? await getDataUser(userID: listIDs) : [];
     const String checkQuery = 'SELECT * FROM contacts WHERE contact_id = ?';
     final List<Map<String, dynamic>> contacts =
         await db.rawQuery(checkQuery, [contact_id]);
@@ -284,6 +282,8 @@ class SqliteHelper {
     const String updateToken =
         'UPDATE contacts SET fcm_token = ? WHERE contact_id = ?';
     const updateFoto = 'UPDATE contacts SET foto = ? WHERE contact_id = ?';
+
+    List<List<dynamic>> batchValues = [];
     for (final user in users) {
       bool found = false;
       String filename = user.foto.toString().split('/').last;
@@ -314,7 +314,7 @@ class SqliteHelper {
         }
       }
       if (!found) {
-        await db.rawInsert(addNewContacts, [
+        batchValues.add([
           user.userID,
           user.nama,
           user.nohp,
@@ -328,6 +328,13 @@ class SqliteHelper {
           await downloadAndSaveFile(filename, user.foto.toString());
         }
       }
+    }
+    if (batchValues.isNotEmpty) {
+      await db.transaction((txn) async {
+        for (var batchValue in batchValues) {
+          await txn.rawInsert(addNewContacts, batchValue);
+        }
+      });
     }
     log('Found ${checkResult.length} Contacts');
   }
