@@ -1,5 +1,6 @@
 // ignore_for_file: camel_case_types, non_constant_identifier_names
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
@@ -21,7 +22,7 @@ class Login_Register_Api {
     try {
       final response = await dio.post(
         '${link}login',
-        data: {'no_hp': noHp, 'password': password, 'health_worker': true},
+        data: {'no_hp': noHp, 'password': password, 'health_worker': 1},
       );
       dynamic token = response.data['token'];
       User user = User.fromJson(response.data['user']);
@@ -53,21 +54,24 @@ class Login_Register_Api {
       required String email,
       required String password,
       String? fcm_token,
-      String? foto,
+      Uint8List? foto,
       String? keterangan}) async {
     try {
+      FormData formData = FormData.fromMap({
+        'nama': nama,
+        'no_hp': noHp,
+        'email': email,
+        'password': password,
+        'fcm_token': fcm_token,
+        'foto': foto != null
+            ? MultipartFile.fromBytes(foto, filename: '$nama.jpg')
+            : null,
+        'keterangan': keterangan,
+        'health_worker': 1
+      });
       final response = await dio.post(
         '${link}register',
-        data: {
-          'nama': nama,
-          'no_hp': noHp,
-          'email': email,
-          'password': password,
-          'fcm_token': fcm_token,
-          'foto': foto,
-          'keterangan': keterangan,
-          'health_worker': true
-        },
+        data: formData,
       );
       return API_Message(status: true, message: response.data['message']);
     } on DioException catch (error) {

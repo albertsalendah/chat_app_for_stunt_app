@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:chat_app_for_stunt_app/Akun/updateFotoPopUp.dart';
+import 'package:chat_app_for_stunt_app/utils/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/user.dart';
@@ -26,7 +27,7 @@ class Akun extends StatefulWidget {
 
 class _AkunState extends State<Akun> {
   User user = User();
-  // User SessionUser = User();
+  static const String link = Configs.LINK;
   String token = '';
   EditAkunApi api = EditAkunApi();
   TextEditingController no_wa = TextEditingController();
@@ -445,11 +446,8 @@ class _AkunState extends State<Akun> {
                 child: CircleAvatar(
                   radius: 65.0,
                   backgroundImage: user.foto != null && user.foto!.isNotEmpty
-                      ? MemoryImage(
-                          base64Decode(
-                            user.foto.toString(),
-                          ),
-                        ) as ImageProvider
+                      ? NetworkImage(link + user.foto.toString(),
+                          headers: {'x-access-token': token}) as ImageProvider
                       : const AssetImage('assets/images/group-115.png'),
                   child: Align(
                     alignment: Alignment.bottomCenter,

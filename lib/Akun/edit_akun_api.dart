@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import '../../models/api_massage.dart';
@@ -115,15 +116,22 @@ class EditAkunApi {
   }
 
   Future<API_Message> updateFoto(
-      {required String userID, String? foto, required String token}) async {
+      {required String userID,
+      required String oldpath,
+      Uint8List? foto,
+      required String token}) async {
     try {
       dio.options.headers['x-access-token'] = token;
+      FormData formData = FormData.fromMap({
+        'userID': userID,
+        'oldpath': oldpath,
+        'foto': foto != null
+            ? MultipartFile.fromBytes(foto, filename: '$userID.jpg')
+            : null,
+      });
       final response = await dio.post(
         '${link}update_foto',
-        data: {
-          'userID': userID,
-          "foto": foto,
-        },
+        data: formData,
       );
       return API_Message(status: true, message: response.data['message']);
     } on DioException catch (error) {

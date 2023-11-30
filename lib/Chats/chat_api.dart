@@ -51,7 +51,8 @@ class ChatApi {
     }
 
     if (data.isNotEmpty) {
-      String imagePath = await saveBase64Image(base64String: data.first.image);
+      String imagePath = await downloadAndSaveFile(data.first.image
+          .toString()); //saveBase64Image(base64String: data.first.image);
       await sqlite
           .saveNewMessage(
               id_message: data.first.idmessage.toString(),
@@ -129,26 +130,28 @@ class ChatApi {
       {required MessageModel entry,
       required String fcm_token,
       required String title}) async {
-    String image = await fileToBase64(entry.image.toString());
+    // String image = await fileToBase64(entry.image.toString());
+
     try {
-      final response = await dio.post(
-        '${link}send_message',
-        data: {
-          "id_message": entry.idmessage,
-          "conversation_id": '${entry.idreceiver}-${entry.idsender}',
-          "id_sender": entry.idsender,
-          "id_receiver": entry.idreceiver,
-          "tanggal_kirim": entry.tanggalkirim,
-          "jam_kirim": entry.jamkirim,
-          "message": entry.message,
-          "image": image,
-          "messageRead": 0,
-          "fcm_token": fcm_token,
-          "title": title,
-        },
-      );
-      // await sqlite.updateStatusChat(
-      //     messageRead: 0, id_message: entry.idmessage.toString());
+      Uint8List image = entry.image.toString().isNotEmpty
+          ? await File(entry.image.toString()).readAsBytes()
+          : Uint8List(0);
+      FormData formData = FormData.fromMap({
+        "id_message": entry.idmessage,
+        "conversation_id": '${entry.idreceiver}-${entry.idsender}',
+        "id_sender": entry.idsender,
+        "id_receiver": entry.idreceiver,
+        "tanggal_kirim": entry.tanggalkirim,
+        "jam_kirim": entry.jamkirim,
+        "message": entry.message,
+        "image": entry.image.toString().isNotEmpty
+            ? MultipartFile.fromBytes(image, filename: '${entry.idmessage}.jpg')
+            : null,
+        "messageRead": 0,
+        "fcm_token": fcm_token,
+        "title": title,
+      });
+      final response = await dio.post('${link}send_message', data: formData);
       log('Server Message : ${response.data['message']}');
     } on DioException catch (error) {
       if (error.response != null) {
@@ -159,6 +162,36 @@ class ChatApi {
       }
       await sqlite.updateStatusChat(
           messageRead: null, id_message: entry.idmessage.toString());
+    }
+  }
+
+  Future<String> downloadAndSaveFile(String imagepath) async {
+    try {
+      if (imagepath.isNotEmpty) {
+        String filename = imagepath.split('/').last;
+        final response = await dio.get(
+          '$link$imagepath',
+          options: Options(responseType: ResponseType.bytes),
+        );
+
+        if (response.statusCode == 200) {
+          final bytes = response.data as List<int>;
+          final appDir = await getApplicationDocumentsDirectory();
+          final file = File('${appDir.path}/$filename');
+
+          await file.writeAsBytes(bytes);
+
+          return file.path;
+        } else {
+          log('Failed to download file: ${response.statusCode}');
+          return '';
+        }
+      } else {
+        return '';
+      }
+    } catch (error) {
+      log('Error downloading file: $error');
+      return '';
     }
   }
 

@@ -283,40 +283,74 @@ class SqliteHelper {
         'INSERT INTO contacts (contact_id, nama, noHp, email, fcm_token, foto) VALUES (?, ?, ?, ?, ?, ?)';
     const String updateToken =
         'UPDATE contacts SET fcm_token = ? WHERE contact_id = ?';
-    //const updateFoto = 'UPDATE contacts SET foto = ? WHERE contact_id = ?';
+    const updateFoto = 'UPDATE contacts SET foto = ? WHERE contact_id = ?';
     for (final user in users) {
       bool found = false;
+      String filename = user.foto.toString().split('/').last;
       for (final checked in checkResult) {
         if (user.userID == checked['contact_id']) {
           found = true;
+          bool checkFoto = await File('$directory/$filename').exists();
+          String stringCurrentFoto = checked['foto'].toString().split('/').last;
+          File currentFoto = File('$directory/$stringCurrentFoto');
           if (user.fcm_token != checked['fcm_token']) {
             final tokenUpdate =
                 await db.rawUpdate(updateToken, [user.fcm_token, user.userID]);
             log('$tokenUpdate Token Berhasil Diupdate');
           }
+          if (!checkFoto) {
+            try {
+              await currentFoto.delete();
+              await downloadAndSaveFile(filename, user.foto.toString())
+                  .then((value) async {
+                await db.rawUpdate(
+                    updateFoto, ['$directory/$filename', user.userID]);
+              });
+            } catch (e) {
+              log('Gagal Menghapus Foto Profile lama $e');
+            }
+          }
           break;
         }
       }
       if (!found) {
-        final addRes = await db.rawInsert(addNewContacts, [
+        await db.rawInsert(addNewContacts, [
           user.userID,
           user.nama,
           user.nohp,
           user.email,
           user.fcm_token,
           user.foto != null && user.foto.toString().isNotEmpty
-              ? '$directory/${user.userID}.jpg'
+              ? '$directory/$filename'
               : null,
         ]);
-        log('Kontak $addRes Berhasil Ditambah');
         if (user.foto != null && user.foto.toString().isNotEmpty) {
-          final bytes = base64.decode(user.foto.toString());
-          final file = File('$directory/${user.userID}.jpg');
-          await file.writeAsBytes(bytes);
+          await downloadAndSaveFile(filename, user.foto.toString());
         }
       }
     }
     log('Found ${checkResult.length} Contacts');
+  }
+
+  Future<void> downloadAndSaveFile(String filename, String imagepath) async {
+    try {
+      final response = await dio.get(
+        '$link$imagepath',
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      if (response.statusCode == 200) {
+        final bytes = response.data as List<int>;
+        final appDir = await getApplicationDocumentsDirectory();
+        final file = File('${appDir.path}/$filename');
+
+        await file.writeAsBytes(bytes);
+      } else {
+        log('Failed to download file: ${response.statusCode}');
+      }
+    } catch (error) {
+      log('Error downloading file: $error');
+    }
   }
 
   Future<List<MessageModel>> getIndividualMessage(

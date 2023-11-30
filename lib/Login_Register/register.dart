@@ -523,7 +523,7 @@ class _RegisterState extends State<Register> {
                           email: email.text,
                           password: pass.text,
                           fcm_token: '',
-                          foto: foto,
+                          foto: imagebytes,
                           keterangan: keterangan.text);
                       Navigator.pop(conLoading);
                       if (result.status) {
