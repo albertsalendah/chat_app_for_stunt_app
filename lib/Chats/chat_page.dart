@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:chat_app_for_stunt_app/Bloc/SocketBloc/socket_bloc.dart';
 import 'package:chat_app_for_stunt_app/Bloc/SocketBloc/socket_state.dart';
@@ -23,18 +24,14 @@ import '../custom_widget/sendMessageCard.dart';
 import '../models/message_model.dart';
 
 class ChatPage extends StatefulWidget {
-  final senderID;
   final receverID;
   final receiverNama;
-  final receiverKet;
   final receiverFoto;
   final receiverFCM;
   const ChatPage(
       {super.key,
-      required this.senderID,
       required this.receverID,
       required this.receiverNama,
-      required this.receiverKet,
       required this.receiverFoto,
       required this.receiverFCM});
 
@@ -42,7 +39,7 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   ChatApi api = ChatApi();
   final TextEditingController messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -60,10 +57,16 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     socketBloc = context.read<SocketProviderBloc>();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       user = await SessionManager.getUser();
       token = await SessionManager.getToken() ?? '';
+      String currentPage = await SessionManager.getCurrentPage() ?? '';
+      if (currentPage.isNotEmpty) {
+        await SessionManager.removeCurrentPage();
+      }
+      await SessionManager.saveCurrentPage(widget.receverID);
       await fetchData();
       await context
           .read<KonsultasiBloc>()
@@ -82,15 +85,45 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.inactive:
+        log('CHAT PAGE INACTIVE');
+        break;
+      case AppLifecycleState.resumed:
+        fetchData();
+        log('CHAT PAGE RESUMED');
+        break;
+      case AppLifecycleState.paused:
+        log('CHAT PAGE PAUSED');
+        break;
+      case AppLifecycleState.detached:
+        log('CHAT PAGE DETACHED');
+        break;
+      case AppLifecycleState.hidden:
+        log('CHAT PAGE HIDDEN');
+        break;
+    }
+  }
+
+  @override
   void dispose() {
     super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
   }
 
   startTimer() {
-    socketBloc.userTyping(isTyping: true, receiverID: widget.receverID);
+    socketBloc.userTyping(
+        isTyping: true,
+        senderID: user.userID.toString(),
+        receiverID: widget.receverID);
     _checkTypingTimer = Timer(const Duration(milliseconds: 600), () {
-      socketBloc.userTyping(isTyping: false, receiverID: widget.receverID);
+      socketBloc.userTyping(
+          isTyping: false,
+          senderID: user.userID.toString(),
+          receiverID: widget.receverID);
     });
   }
 
@@ -106,9 +139,10 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> fetchData() async {
     await context.read<KonsultasiBloc>().getIndividualMessage(
         senderID: user.userID.toString(),
-        receiverID: user.userID.toString() != widget.receverID
-            ? widget.receverID.toString()
-            : widget.senderID);
+        receiverID: widget.receverID.toString());
+    await context
+        .read<KonsultasiBloc>()
+        .getLatestMesage(userID: user.userID.toString());
   }
 
   void pickPicture() async {
@@ -231,6 +265,7 @@ class _ChatPageState extends State<ChatPage> {
                     return dateTimeA.compareTo(dateTimeB);
                   });
                   messageRead(unReadMessageList);
+                  log('List Message ${listMessage.length}');
                 }
               }
               return Expanded(
@@ -240,7 +275,6 @@ class _ChatPageState extends State<ChatPage> {
                       await fetchData();
                     },
                     child: ListView.builder(
-                      //shrinkWrap: true,
                       reverse: true,
                       itemCount: listMessage.length,
                       itemBuilder: (context, index) {
@@ -354,10 +388,7 @@ class _ChatPageState extends State<ChatPage> {
                           await api
                               .sendMessage(
                                   id_sender: user.userID.toString(),
-                                  id_receiver:
-                                      user.userID.toString() != widget.receverID
-                                          ? widget.receverID.toString()
-                                          : widget.senderID,
+                                  id_receiver: widget.receverID.toString(),
                                   message: messageController.text,
                                   image: foto,
                                   fcm_token: widget.receiverFCM.toString(),
@@ -443,11 +474,8 @@ class _ChatPageState extends State<ChatPage> {
                       radius: 39.0 * fem,
                       backgroundImage: widget.receiverFoto != null &&
                               widget.receiverFoto!.isNotEmpty
-                          ? MemoryImage(
-                              base64Decode(
-                                widget.receiverFoto.toString(),
-                              ),
-                            ) as ImageProvider
+                          ? FileImage(File(widget.receiverFoto.toString()))
+                              as ImageProvider
                           : const AssetImage('assets/images/group-1-jAH.png'),
                     ),
                   ),
@@ -474,7 +502,9 @@ class _ChatPageState extends State<ChatPage> {
                               isOnline = false;
                             }
                           } else if (state is UserTyping) {
-                            isTyping = state.isTyping;
+                            if (widget.receverID == state.senderID) {
+                              isTyping = state.isTyping;
+                            }
                           }
                           return Visibility(
                             visible: !isTyping,

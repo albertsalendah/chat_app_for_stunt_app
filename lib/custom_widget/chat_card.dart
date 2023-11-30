@@ -1,6 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
-
-import 'dart:convert';
+import 'dart:io';
+import 'package:chat_app_for_stunt_app/models/contact_model.dart';
+import 'package:chat_app_for_stunt_app/models/user.dart';
+import 'package:chat_app_for_stunt_app/utils/SessionManager.dart';
 import 'package:chat_app_for_stunt_app/utils/formatTgl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,8 +15,12 @@ import '../utils/sqlite_helper.dart';
 class ChatCard extends StatefulWidget {
   final MessageModel messageModel;
   final int totalUnread;
+  final Contact contact;
   const ChatCard(
-      {super.key, required this.messageModel, required this.totalUnread});
+      {super.key,
+      required this.messageModel,
+      required this.totalUnread,
+      required this.contact});
 
   @override
   State<ChatCard> createState() => _ChatCardState();
@@ -23,12 +29,17 @@ class ChatCard extends StatefulWidget {
 class _ChatCardState extends State<ChatCard> {
   EditAkunApi editAkunApi = EditAkunApi();
   SqliteHelper sqlite = SqliteHelper();
+  User user = User();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      setState(() {});
+      user = await SessionManager.getUser();
+      context.read<KonsultasiBloc>().getDaftarKontak();
+      if (widget.contact.contact_id == null) {
+        context.read<KonsultasiBloc>().getDaftarKontak();
+      }
     });
   }
 
@@ -43,12 +54,11 @@ class _ChatCardState extends State<ChatCard> {
           context,
           MaterialPageRoute(
             builder: (context) => ChatPage(
-                senderID: widget.messageModel.idreceiver,
-                receverID: widget.messageModel.idsender,
-                receiverNama: widget.messageModel.namaReceiver,
-                receiverKet: widget.messageModel.ketReceiver,
-                receiverFoto: widget.messageModel.fotoReceiver,
-                receiverFCM: widget.messageModel.fcm_token),
+                //senderID: widget.messageModel.idreceiver,
+                receverID: widget.contact.contact_id,
+                receiverNama: widget.contact.nama,
+                receiverFoto: widget.contact.foto,
+                receiverFCM: widget.contact.fcm_token),
           ),
         );
       },
@@ -65,11 +75,15 @@ class _ChatCardState extends State<ChatCard> {
             PopupMenuItem(
               value: 'hapus',
               onTap: () async {
-                await sqlite.deleteConversation(
-                    conversation_id:
-                        widget.messageModel.conversationId.toString());
-                await context.read<KonsultasiBloc>().getLatestMesage(
-                    userID: widget.messageModel.idreceiver.toString());
+                await sqlite
+                    .deleteConversation(
+                        conversation_id:
+                            widget.messageModel.conversationId.toString())
+                    .then((value) async {
+                  await context
+                      .read<KonsultasiBloc>()
+                      .getLatestMesage(userID: user.userID.toString());
+                });
               },
               child: const Text('Hapus'),
             ),
@@ -103,19 +117,16 @@ class _ChatCardState extends State<ChatCard> {
                 height: double.infinity,
                 child: CircleAvatar(
                   radius: 39.0 * fem,
-                  backgroundImage: widget.messageModel.fotoReceiver != null &&
-                          widget.messageModel.fotoReceiver!.isNotEmpty
-                      ? MemoryImage(
-                          base64Decode(
-                            widget.messageModel.fotoReceiver.toString(),
-                          ),
-                        ) as ImageProvider
+                  backgroundImage: widget.contact.foto != null &&
+                          widget.contact.foto!.isNotEmpty
+                      ? FileImage(File(widget.contact.foto.toString()))
+                          as ImageProvider
                       : const AssetImage('assets/images/group-1-jAH.png'),
                 ),
               ),
             ),
             Container(
-              height: 70,
+              height: 74,
               width: 310,
               padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
               child: Column(
@@ -124,19 +135,15 @@ class _ChatCardState extends State<ChatCard> {
                   Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          margin: EdgeInsets.fromLTRB(
-                              0 * fem, 0 * fem, 0 * fem, 2 * fem),
-                          child: Text(
-                            widget.messageModel.namaReceiver ?? '',
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            style: TextStyle(
-                              fontSize: 18 * ffem,
-                              fontWeight: FontWeight.w600,
-                              height: 1.2125 * ffem / fem,
-                              color: const Color(0xff161f35),
-                            ),
+                        child: Text(
+                          widget.contact.nama ?? '',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 18 * ffem,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2125 * ffem / fem,
+                            color: const Color(0xff161f35),
                           ),
                         ),
                       ),

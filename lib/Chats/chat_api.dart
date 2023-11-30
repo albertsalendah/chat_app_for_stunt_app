@@ -6,6 +6,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:chat_app_for_stunt_app/Bloc/SocketBloc/socket_bloc.dart';
 import 'package:chat_app_for_stunt_app/models/message_model.dart';
+import 'package:chat_app_for_stunt_app/models/user.dart';
+import 'package:chat_app_for_stunt_app/utils/SessionManager.dart';
 import 'package:chat_app_for_stunt_app/utils/config.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,9 +23,11 @@ class ChatApi {
   String link = Configs.LINK;
   final Dio dio = Dio();
   SqliteHelper sqlite = SqliteHelper();
+  User user = User();
 
   void getLatestMessageFromServer(
       {required String senderID, required String receiverID}) async {
+    user = await SessionManager.getUser();
     List<MessageModel> data = [];
     try {
       final response = await dio.get(
@@ -48,55 +52,53 @@ class ChatApi {
 
     if (data.isNotEmpty) {
       String imagePath = await saveBase64Image(base64String: data.first.image);
-      int res = await sqlite.saveNewMessage(
-          id_message: data.first.idmessage.toString(),
-          conversation_id: data.first.conversationId.toString(),
-          id_sender: data.first.idsender.toString(),
-          id_receiver: data.first.idreceiver.toString(),
-          tanggal_kirim: DateFormat('yyyy-MM-dd HH:mm:ss')
-              .format(DateTime.parse(data.first.tanggalkirim.toString())),
-          jam_kirim: data.first.jamkirim.toString(),
-          message: data.first.message.toString(),
-          image: imagePath,
-          messageRead: data.first.messageRead);
-      if (res != 0) {
-        if (navigatorKey.currentContext != null) {
-          final socketBloc =
-              BlocProvider.of<SocketProviderBloc>(navigatorKey.currentContext!);
-          final konsultasiBloc =
-              BlocProvider.of<KonsultasiBloc>(navigatorKey.currentContext!);
-          socketBloc.messageReceive(
-              messageId: data.first.idmessage.toString(),
-              senderID: senderID,
-              receiverID: receiverID);
-          await konsultasiBloc.getIndividualMessage(
-              senderID: senderID.toString(), receiverID: receiverID.toString());
-          await konsultasiBloc.getLatestMesage(userID: senderID.toString());
-        } else {
-          SocketProviderBloc socketBloc = SocketProviderBloc();
-          socketBloc.connectSocket(userID: senderID);
-          socketBloc.messageReceive(
-              messageId: data.first.idmessage.toString(),
-              senderID: senderID,
-              receiverID: receiverID);
+      await sqlite
+          .saveNewMessage(
+              id_message: data.first.idmessage.toString(),
+              conversation_id: data.first.conversationId.toString(),
+              id_sender: data.first.idsender.toString(),
+              id_receiver: data.first.idreceiver.toString(),
+              tanggal_kirim: DateFormat('yyyy-MM-dd HH:mm:ss')
+                  .format(DateTime.parse(data.first.tanggalkirim.toString())),
+              jam_kirim: data.first.jamkirim.toString(),
+              message: data.first.message.toString(),
+              image: imagePath,
+              messageRead: data.first.messageRead)
+          .then((res) async {
+        if (res != 0) {
+          if (navigatorKey.currentContext != null) {
+            final socketBloc = BlocProvider.of<SocketProviderBloc>(
+                navigatorKey.currentContext!);
+            final konsultasiBloc =
+                BlocProvider.of<KonsultasiBloc>(navigatorKey.currentContext!);
+            socketBloc.messageReceive(
+                messageId: data.first.idmessage.toString(),
+                senderID: senderID,
+                receiverID: receiverID);
+            konsultasiBloc.getLatestMesage(userID: user.userID.toString());
+            await SessionManager.getCurrentPage().then((currentPage) async {
+              log('CURRENT PAGE : $currentPage');
+              if (currentPage != null &&
+                  currentPage.isNotEmpty &&
+                  currentPage == receiverID) {
+                await konsultasiBloc.getIndividualMessage(
+                    senderID: user.userID.toString(),
+                    receiverID: receiverID.toString());
+              }
+            });
+          } else {
+            SocketProviderBloc socketBloc = SocketProviderBloc();
+            socketBloc.connectSocket(userID: senderID);
+            socketBloc.messageReceive(
+                messageId: data.first.idmessage.toString(),
+                senderID: senderID,
+                receiverID: receiverID);
+          }
+          sqlite.deleteSingleChatServer(
+              id_message: data.first.idmessage.toString());
         }
-        sqlite.deleteSingleChatServer(
-            id_message: data.first.idmessage.toString());
-      }
+      });
     }
-  }
-
-  Future<List<MessageModel>> getListLatestMessage(
-      {required String userID}) async {
-    List<MessageModel> list = await sqlite.getListLatestMessage(userID: userID);
-    return list;
-  }
-
-  Future<List<MessageModel>> getIndividualMessage(
-      {required String senderID, required String receiverID}) async {
-    List<MessageModel> list = await sqlite.getIndividualMessage(
-        senderID: senderID, receiverID: receiverID);
-    return list;
   }
 
   Future<MessageModel> sendMessage(

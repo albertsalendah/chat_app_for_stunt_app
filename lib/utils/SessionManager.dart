@@ -84,23 +84,18 @@ class SessionManager {
     await prefs.remove(_keyUser);
   }
 
-  // static Future<void> saveDataAnak(DataAnakModel data) async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   await prefs.setString(_keyDataAnak, json.encode(data));
-  // }
+  static Future<void> saveCurrentPage(String receiverId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('currentPage', receiverId);
+  }
 
-  // static Future<DataAnakModel> getDataAnak() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   String? jsonData = prefs.getString(_keyDataAnak);
-  //   try {
-  //     if (jsonData != null) {
-  //       DataAnakModel data = DataAnakModel.fromJson(json.decode(jsonData));
-  //       return data;
-  //     } else {
-  //       return DataAnakModel();
-  //     }
-  //   } catch (e) {
-  //     return DataAnakModel();
-  //   }
-  // }
+  static Future<String?> getCurrentPage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('currentPage');
+  }
+
+  static Future<void> removeCurrentPage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('currentPage');
+  }
 }

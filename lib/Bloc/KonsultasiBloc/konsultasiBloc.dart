@@ -1,8 +1,9 @@
+// ignore_for_file: non_constant_identifier_names
+import 'package:chat_app_for_stunt_app/models/contact_model.dart';
 import 'package:chat_app_for_stunt_app/utils/sqlite_helper.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../Chats/chat_api.dart';
-import '../../models/message_model.dart';
 import '../../utils/config.dart';
 import 'konsultasiState.dart';
 
@@ -12,17 +13,31 @@ class KonsultasiBloc extends Cubit<KonsultasiState> {
   SqliteHelper sqlite = SqliteHelper();
   ChatApi konsultasiAPI = ChatApi();
 
-  getLatestMesage({required String userID}) async {
-    List<MessageModel> list =
-        await konsultasiAPI.getListLatestMessage(userID: userID);
-    List<MessageModel> list2 = await sqlite.countUnRead();
-    emit(ListLatestMesasage(list, list2));
+  Future<void> getLatestMesage({required String userID}) async {
+    await sqlite.getListLatestMessage(userID: userID).then((list) async {
+      await sqlite.countUnRead(userID).then((list2) {
+        emit(ListLatestMesasage(list, list2));
+      });
+    });
   }
 
-  getIndividualMessage(
+  Future<void> getIndividualMessage(
       {required String senderID, required String receiverID}) async {
-    List<MessageModel> list = await konsultasiAPI.getIndividualMessage(
-        senderID: senderID, receiverID: receiverID);
-    emit(ListIndividualMesasage(list));
+    await sqlite
+        .getIndividualMessage(senderID: senderID, receiverID: receiverID)
+        .then((value) {
+      emit(ListIndividualMesasage(value));
+    });
+  }
+
+  Future<void> getDaftarKontak() async {
+    await sqlite.getAllcontact().then((value) {
+      emit(DaftarKontakLoaded(value));
+    });
+  }
+
+  getKontak({required String contact_id}) async {
+    Contact list = await sqlite.getdetailcontact(contact_id: contact_id);
+    emit(KontakLoaded(list));
   }
 }

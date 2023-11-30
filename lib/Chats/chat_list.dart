@@ -1,5 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:developer';
 
+import 'package:chat_app_for_stunt_app/Chats/daftar_kontak.dart';
+import 'package:chat_app_for_stunt_app/models/contact_model.dart';
+import 'package:chat_app_for_stunt_app/utils/sqlite_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -19,15 +24,18 @@ class ChatList extends StatefulWidget {
   State<ChatList> createState() => _ChatListState();
 }
 
-class _ChatListState extends State<ChatList> {
+class _ChatListState extends State<ChatList> with WidgetsBindingObserver {
   User user = User();
   String token = '';
   List<MessageModel> listMessage = [];
   List<MessageModel> unreadlist = [];
+  List<Contact> daftarKontak = [];
+  SqliteHelper sqlite = SqliteHelper();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       user = await SessionManager.getUser();
       token = await SessionManager.getToken() ?? '';
@@ -38,16 +46,47 @@ class _ChatListState extends State<ChatList> {
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.inactive:
+        log('CHAT LIST PAGE INACTIVE');
+        break;
+      case AppLifecycleState.resumed:
+        fetchData();
+        log('CHAT LIST PAGE RESUMED');
+        break;
+      case AppLifecycleState.paused:
+        log('CHAT LIST PAGE PAUSED');
+        break;
+      case AppLifecycleState.detached:
+        log('CHAT LIST PAGE  DETACHED');
+        break;
+      case AppLifecycleState.hidden:
+        log('CHAT LIST PAGE  HIDDEN');
+        break;
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+  }
+
   Future<void> fetchData() async {
-    await context
+    context
         .read<KonsultasiBloc>()
         .getLatestMesage(userID: user.userID.toString());
+    await context.read<KonsultasiBloc>().getDaftarKontak();
   }
 
   @override
   Widget build(BuildContext context) {
     double baseWidth = 375;
     double fem = MediaQuery.of(context).size.width / baseWidth;
+    double ffem = fem * 0.97;
     return SafeArea(
       child: GestureDetector(
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -112,32 +151,51 @@ class _ChatListState extends State<ChatList> {
                   return dateTimeB.compareTo(dateTimeA);
                 });
                 unreadlist = state.listAllUnread;
+                log('Message List : ${listMessage.length}');
+              } else if (state is DaftarKontakLoaded) {
+                daftarKontak = state.daftarkontak;
               }
-              return SizedBox(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    await fetchData();
-                  },
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: listMessage.length,
-                    itemBuilder: (context, index) {
-                      var count = unreadlist.where((element) =>
-                          element.conversationId ==
-                          listMessage[index].conversationId);
-                      return Column(
-                        children: [
-                          ChatCard(
-                              messageModel: listMessage[index],
-                              totalUnread: count.length),
-                          const SizedBox(
-                            height: 8,
-                          )
-                        ],
-                      );
-                    },
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: con(fem, ffem),
                   ),
-                ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        await fetchData();
+                      },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(8),
+                        itemCount: listMessage.length,
+                        itemBuilder: (context, index) {
+                          var count = unreadlist.where((element) =>
+                              element.conversationId ==
+                              listMessage[index].conversationId);
+                          String id = listMessage[index].idreceiver.toString();
+                          if (listMessage[index].idreceiver.toString() ==
+                              user.userID.toString()) {
+                            id = listMessage[index].idsender.toString();
+                          }
+                          return Column(
+                            children: [
+                              ChatCard(
+                                  messageModel: listMessage[index],
+                                  totalUnread: count.length,
+                                  contact: daftarKontak.firstWhere(
+                                      (element) => element.contact_id == id,
+                                      orElse: () => Contact())),
+                              const SizedBox(
+                                height: 8,
+                              )
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -229,7 +287,7 @@ class _ChatListState extends State<ChatList> {
 
   Row con(double fem, double ffem) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Padding(
@@ -237,39 +295,27 @@ class _ChatListState extends State<ChatList> {
           child: Container(
             // frame41zVP (355:15129)
             margin: EdgeInsets.fromLTRB(0 * fem, 0.5 * fem, 108 * fem, 0 * fem),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  // listpakarkonsultangizivP3 (355:15033)
-                  margin:
-                      EdgeInsets.fromLTRB(0 * fem, 0 * fem, 0 * fem, 2 * fem),
-                  child: Text(
-                    'List pakar konsultan Gizi',
-                    style: TextStyle(
-                      fontSize: 14 * ffem,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2125 * ffem / fem,
-                      color: const Color(0xff161f35),
-                    ),
-                  ),
+            child: Container(
+              margin: EdgeInsets.fromLTRB(0 * fem, 0 * fem, 0 * fem, 2 * fem),
+              child: Text(
+                'Daftar Kontak',
+                style: TextStyle(
+                  fontSize: 16 * ffem,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2125 * ffem / fem,
+                  color: const Color(0xff161f35),
                 ),
-                Text(
-                  // pilihpakarlakukankonsultasi1QV (355:15128)
-                  'Pilih pakar & lakukan konsultasi',
-                  style: TextStyle(
-                    fontSize: 12 * ffem,
-                    fontWeight: FontWeight.w400,
-                    height: 1.6666666667 * ffem / fem,
-                    color: const Color(0xff707070),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const DaftarKontak()),
+            );
+          },
           child: Container(
               width: 35 * fem,
               height: 35 * fem,

@@ -31,8 +31,9 @@ class UserDisonnected extends SocketState {
 }
 
 class UserTyping extends SocketState {
+  final String senderID;
   final bool isTyping;
-  const UserTyping(this.isTyping);
+  const UserTyping(this.isTyping, this.senderID);
 
   @override
   List<Object> get props => [isTyping];

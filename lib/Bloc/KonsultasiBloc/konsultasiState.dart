@@ -1,3 +1,4 @@
+import 'package:chat_app_for_stunt_app/models/contact_model.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../models/message_model.dart';
@@ -38,6 +39,24 @@ class ListIndividualMesasage extends KonsultasiState {
 
   @override
   List<Object> get props => [listIndividualMessage];
+}
+
+class DaftarKontakLoaded extends KonsultasiState {
+  final List<Contact> daftarkontak;
+
+  const DaftarKontakLoaded(this.daftarkontak);
+
+  @override
+  List<Object> get props => [daftarkontak];
+}
+
+class KontakLoaded extends KonsultasiState {
+  final Contact kontak;
+
+  const KontakLoaded(this.kontak);
+
+  @override
+  List<Object> get props => [kontak];
 }
 
 class DataErrorState extends KonsultasiState {

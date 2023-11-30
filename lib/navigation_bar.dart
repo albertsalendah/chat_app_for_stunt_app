@@ -60,7 +60,7 @@ class _NavigationbarState extends State<Navigationbar> {
     await context
         .read<AllBloc>()
         .getUserData(userID: user.userID.toString(), token: token);
-    await context
+    context
         .read<KonsultasiBloc>()
         .getLatestMesage(userID: user.userID.toString());
     await context

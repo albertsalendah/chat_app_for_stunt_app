@@ -38,7 +38,7 @@ class ReceiveMessageCard extends StatelessWidget {
                   onTap: () async {
                     await sqlite.deleteSingleChat(
                         id_message: message.idmessage.toString());
-                    await context.read<KonsultasiBloc>().getIndividualMessage(
+                   await context.read<KonsultasiBloc>().getIndividualMessage(
                         senderID: message.idsender.toString(),
                         receiverID: message.idreceiver.toString());
                   },

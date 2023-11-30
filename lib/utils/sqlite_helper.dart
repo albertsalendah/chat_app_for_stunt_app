@@ -1,9 +1,14 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
+import 'package:chat_app_for_stunt_app/models/contact_model.dart';
+import 'package:chat_app_for_stunt_app/utils/SessionManager.dart';
 import 'package:chat_app_for_stunt_app/utils/random_String.dart';
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path;
 import '../models/message_model.dart';
@@ -39,6 +44,8 @@ class SqliteHelper {
       onCreate: (Database db, int version) async {
         await db.execute(
             'CREATE TABLE $tableName ( id_message VARCHAR(128) PRIMARY KEY, conversation_id VARCHAR(128),id_sender VARCHAR(32),id_receiver VARCHAR(32), tanggal_kirim DATETIME,jam_kirim VARCHAR(10),message VARCHAR(255), image LONGTEXT NULL, messageRead INTEGER(1))');
+        await db.execute(
+            'CREATE TABLE contacts (contact_id VARCHAR(32) PRIMARY KEY, nama VARCHAR(255), noHp VARCHAR(32), email VARCHAR(128),fcm_token VARCHAR(255),foto TEXT NULL)');
         await db.execute('PRAGMA cache_size = -100000000;');
         log('Table $tableName created successfully!');
       },
@@ -185,14 +192,16 @@ class SqliteHelper {
       }).toList();
       result.removeWhere(
           (element) => element.conversationId == '$userID-$userID');
+      await addNewContacts(result);
     }
     return result;
   }
 
-  Future<List<MessageModel>> countUnRead() async {
+  Future<List<MessageModel>> countUnRead(String userID) async {
     final db = await database;
-    const query = 'SELECT * FROM messages WHERE messageRead != 1';
-    List<Map<String, dynamic>> count = await db.rawQuery(query);
+    const query =
+        'SELECT * FROM messages WHERE messageRead != 1 AND id_sender != ?';
+    List<Map<String, dynamic>> count = await db.rawQuery(query, [userID]);
     List<MessageModel> result = count.map((e) {
       return MessageModel(
         idmessage: e['id_message'],
@@ -209,6 +218,107 @@ class SqliteHelper {
     return result;
   }
 
+  Future<List<Contact>> getAllcontact() async {
+    final db = await database;
+    const String checkQuery = 'SELECT * FROM contacts';
+    final List<Map<String, dynamic>> contacts = await db.rawQuery(checkQuery);
+    List<Contact> result = contacts.map((e) {
+      return Contact(
+        contact_id: e['contact_id'],
+        nama: e['nama'],
+        noHp: e['noHp'],
+        email: e['email'],
+        fcm_token: e['fcm_token'],
+        foto: e['foto'],
+      );
+    }).toList();
+    return result;
+  }
+
+  Future<Contact> getdetailcontact({required String contact_id}) async {
+    final db = await database;
+    final List<String> listIDs = [];
+    listIDs.add(contact_id);
+    final List<User> users =
+        listIDs.isNotEmpty ? await getDataUser(userID: listIDs) : [];
+    const String checkQuery = 'SELECT * FROM contacts WHERE contact_id = ?';
+    final List<Map<String, dynamic>> contacts =
+        await db.rawQuery(checkQuery, [contact_id]);
+    List<Contact> result = contacts.map((e) {
+      return Contact(
+        contact_id: e['contact_id'],
+        nama: e['nama'],
+        noHp: e['noHp'],
+        email: e['email'],
+        fcm_token: e['fcm_token'],
+        foto: e['foto'],
+      );
+    }).toList();
+    return result.first;
+  }
+
+  Future<void> deleteContact({required String contact_id}) async {
+    final db = await database;
+    const query = 'DELETE FROM contacts WHERE contact_id = ?;';
+    int result = await db.rawDelete(query, [contact_id]);
+    log('$result Contact deleted');
+  }
+
+  Future<void> addNewContacts(List<MessageModel> listChat) async {
+    final db = await database;
+    User u = await SessionManager.getUser();
+    final directory = (await getApplicationDocumentsDirectory()).path;
+    final List<String> listIDs =
+        listChat.map((e) => e.idsender.toString()).toList();
+    listIDs.removeWhere((element) => element == '${u.userID}');
+    final List<User> users =
+        listIDs.isNotEmpty ? await getDataUser(userID: listIDs) : [];
+    final String checkQuery =
+        'SELECT * FROM contacts WHERE contact_id IN (${users.map((item) => '?').join(', ')})';
+    final List<Map<String, dynamic>> checkResult = await db.rawQuery(
+      checkQuery,
+      users.map((item) => item.userID).toList(),
+    );
+    const String addNewContacts =
+        'INSERT INTO contacts (contact_id, nama, noHp, email, fcm_token, foto) VALUES (?, ?, ?, ?, ?, ?)';
+    const String updateToken =
+        'UPDATE contacts SET fcm_token = ? WHERE contact_id = ?';
+    //const updateFoto = 'UPDATE contacts SET foto = ? WHERE contact_id = ?';
+    for (final user in users) {
+      bool found = false;
+      for (final checked in checkResult) {
+        if (user.userID == checked['contact_id']) {
+          found = true;
+          if (user.fcm_token != checked['fcm_token']) {
+            final tokenUpdate =
+                await db.rawUpdate(updateToken, [user.fcm_token, user.userID]);
+            log('$tokenUpdate Token Berhasil Diupdate');
+          }
+          break;
+        }
+      }
+      if (!found) {
+        final addRes = await db.rawInsert(addNewContacts, [
+          user.userID,
+          user.nama,
+          user.nohp,
+          user.email,
+          user.fcm_token,
+          user.foto != null && user.foto.toString().isNotEmpty
+              ? '$directory/${user.userID}.jpg'
+              : null,
+        ]);
+        log('Kontak $addRes Berhasil Ditambah');
+        if (user.foto != null && user.foto.toString().isNotEmpty) {
+          final bytes = base64.decode(user.foto.toString());
+          final file = File('$directory/${user.userID}.jpg');
+          await file.writeAsBytes(bytes);
+        }
+      }
+    }
+    log('Found ${checkResult.length} Contacts');
+  }
+
   Future<List<MessageModel>> getIndividualMessage(
       {required String senderID, required String receiverID}) async {
     final db = await database;
@@ -219,6 +329,7 @@ class SqliteHelper {
     List<MessageModel> result = res.map((e) {
       return MessageModel(
         idmessage: e['id_message'],
+        conversationId: e['conversation_id'],
         idsender: e['id_sender'],
         idreceiver: e['id_receiver'],
         tanggalkirim: e['tanggal_kirim'],
