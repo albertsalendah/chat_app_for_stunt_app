@@ -36,7 +36,7 @@ class LupaPasswordApi {
   Future<User> getDataUser({required String noHp}) async {
     User data = User();
     try {
-      final response = await dio.get(
+      final response = await dio.post(
         '${link}get_user_byNo',
         data: {'noHp': noHp},
       );

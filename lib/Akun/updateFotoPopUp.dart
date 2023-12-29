@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:chat_app_for_stunt_app/custom_widget/popUpLoading.dart';
+import 'package:chat_app_for_stunt_app/utils/config.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,6 +26,7 @@ class UpdateFotoPopUp extends StatefulWidget {
 }
 
 class _UpdateFotoPopUpState extends State<UpdateFotoPopUp> {
+  static const String link = Configs.LINK;
   EditAkunApi api = EditAkunApi();
   User user = User();
   String token = '';
@@ -92,7 +94,6 @@ class _UpdateFotoPopUpState extends State<UpdateFotoPopUp> {
   Widget build(BuildContext context) {
     double baseWidth = 305;
     double fem = MediaQuery.of(context).size.width / baseWidth;
-    double ffem = fem * 0.97;
     return AlertDialog(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(20 * fem))),
@@ -106,35 +107,41 @@ class _UpdateFotoPopUpState extends State<UpdateFotoPopUp> {
                 margin:
                     EdgeInsets.fromLTRB(5 * fem, 0 * fem, 5 * fem, 20 * fem),
                 width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        pickPicture();
-                      },
-                      child: CircleAvatar(
-                        radius: 65.0,
-                        backgroundImage: imagebytes != null
-                            ? MemoryImage(imagebytes!) as ImageProvider
-                            : const AssetImage('assets/images/group-115.png'),
+                child: GestureDetector(
+                  onTap: () {
+                    pickPicture();
+                  },
+                  child:  CircleAvatar(
+                radius: 65.0,
+                backgroundImage: imagebytes != null
+                    ? MemoryImage(imagebytes!)
+                    : user.foto != null && user.foto!.isNotEmpty
+                        ? NetworkImage(link + user.foto.toString(),
+                                headers: {'x-access-token': token})
+                            as ImageProvider
+                        : const AssetImage(
+                            'assets/images/group-115.png'),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: 130,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(200),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(65),
+                        bottomRight: Radius.circular(65),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.only(top: 8),
-                      margin: EdgeInsets.fromLTRB(
-                          0 * fem, 0 * fem, 0 * fem, 7 * fem),
-                      child: Text(
-                        'Tekan Foto Untuk Memilih Foto Baru',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16 * ffem,
-                          height: 1.2125 * ffem / fem,
-                          color: const Color(0xff161f35),
-                        ),
-                      ),
-                    ),
-                  ],
+                    child: const Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Ubah',
+                          style: TextStyle(color: Colors.black),
+                        )),
+                  ),
+                ),
+                                  ),
                 ),
               ),
               Row(

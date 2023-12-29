@@ -17,7 +17,7 @@ class EditAkunApi {
       {required String userID, required String token}) async {
     try {
       dio.options.headers['x-access-token'] = token;
-      final response = await dio.get(
+      final response = await dio.post(
         '${link}get_data_user',
         data: {'userID': userID},
       );

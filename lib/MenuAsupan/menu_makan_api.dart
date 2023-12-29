@@ -18,7 +18,7 @@ class MenuMakanAPI {
     List<RekomendasiMenuMakan> data = [];
     try {
       dio.options.headers['x-access-token'] = token;
-      final response = await dio.get(
+      final response = await dio.post(
         '${link}list_rekomendasi_menu_makan',
         data: {'user_id': user_id},
       );

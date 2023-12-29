@@ -445,7 +445,7 @@ class SqliteHelper {
   Future<List<User>> getDataUser({required List<String> userID}) async {
     List<User> data = [];
     try {
-      final response = await dio.get(
+      final response = await dio.post(
         '${link}get_data_user_message',
         data: {'userID': userID},
       );

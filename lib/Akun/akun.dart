@@ -207,24 +207,24 @@ class _AkunState extends State<Akun> {
                           ],
                         ),
                       ),
-                      const SizedBox(
-                        height: 16,
-                      ),
-                      const Row(
-                        children: [
-                          Icon(
-                            Icons.question_mark,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(
-                            width: 12,
-                          ),
-                          Text(
-                            'Bantuan',
-                            style: TextStyle(fontSize: 16),
-                          )
-                        ],
-                      ),
+                      // const SizedBox(
+                      //   height: 16,
+                      // ),
+                      // const Row(
+                      //   children: [
+                      //     Icon(
+                      //       Icons.question_mark,
+                      //       color: Colors.grey,
+                      //     ),
+                      //     SizedBox(
+                      //       width: 12,
+                      //     ),
+                      //     Text(
+                      //       'Bantuan',
+                      //       style: TextStyle(fontSize: 16),
+                      //     )
+                      //   ],
+                      // ),
                       const SizedBox(
                         height: 16,
                       ),
